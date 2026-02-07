@@ -32,72 +32,72 @@ export class CommentsService {
         });
     }
     /**
-     * @param commentId A unique integer value identifying this comment.
+     * @param id
      * @returns Comment
      * @throws ApiError
      */
     public static commentsRead(
-        commentId: number,
+        id: string,
     ): CancelablePromise<Comment> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/comments/{comment_id}/',
+            url: '/comments/{id}/',
             path: {
-                'comment_id': commentId,
+                'id': id,
             },
         });
     }
     /**
-     * @param commentId A unique integer value identifying this comment.
+     * @param id
      * @param data
      * @returns Comment
      * @throws ApiError
      */
     public static commentsUpdate(
-        commentId: number,
+        id: string,
         data: Comment,
     ): CancelablePromise<Comment> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/comments/{comment_id}/',
+            url: '/comments/{id}/',
             path: {
-                'comment_id': commentId,
+                'id': id,
             },
             body: data,
         });
     }
     /**
-     * @param commentId A unique integer value identifying this comment.
+     * @param id
      * @param data
      * @returns Comment
      * @throws ApiError
      */
     public static commentsPartialUpdate(
-        commentId: number,
+        id: string,
         data: Comment,
     ): CancelablePromise<Comment> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/comments/{comment_id}/',
+            url: '/comments/{id}/',
             path: {
-                'comment_id': commentId,
+                'id': id,
             },
             body: data,
         });
     }
     /**
-     * @param commentId A unique integer value identifying this comment.
+     * @param id
      * @returns void
      * @throws ApiError
      */
     public static commentsDelete(
-        commentId: number,
+        id: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/comments/{comment_id}/',
+            url: '/comments/{id}/',
             path: {
-                'comment_id': commentId,
+                'id': id,
             },
         });
     }

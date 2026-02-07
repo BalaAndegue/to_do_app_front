@@ -7,6 +7,7 @@ export type ChecklistItem = {
     name: string;
     checked?: boolean;
     position: number;
+    readonly created_at?: string;
     checklist: number;
 };
 

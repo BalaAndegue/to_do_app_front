@@ -2,12 +2,15 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Card } from './Card';
 export type List = {
     readonly list_id?: number;
+    readonly cards?: Array<Card>;
     name: string;
     position: number;
     archived?: boolean;
     readonly created_at?: string;
+    readonly updated_at?: string;
     board: number;
 };
 

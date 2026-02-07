@@ -4,7 +4,7 @@
 /* eslint-disable */
 export type Label = {
     readonly label_id?: number;
-    name: string;
+    name?: string;
     color: string;
     archived?: boolean;
     board: number;

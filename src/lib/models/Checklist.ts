@@ -2,9 +2,13 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { ChecklistItem } from './ChecklistItem';
 export type Checklist = {
     readonly checklist_id?: number;
-    name: string;
     card: number;
+    name: string;
+    position?: number;
+    readonly created_at?: string;
+    readonly items?: Array<ChecklistItem>;
 };
 

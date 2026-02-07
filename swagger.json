@@ -287,13 +287,12 @@ paths:
     parameters:
     - name: id
       in: path
-      description: A unique integer value identifying this board member.
       required: true
-      type: integer
+      type: string
   /boards/:
     get:
       operationId: boards_list
-      description: ''
+      description: ViewSet for viewing and editing boards.
       parameters: []
       responses:
         '200':
@@ -306,7 +305,7 @@ paths:
       - boards
     post:
       operationId: boards_create
-      description: ''
+      description: ViewSet for viewing and editing boards.
       parameters:
       - name: data
         in: body
@@ -321,10 +320,10 @@ paths:
       tags:
       - boards
     parameters: []
-  /boards/{board_id}/:
+  /boards/{id}/:
     get:
       operationId: boards_read
-      description: ''
+      description: ViewSet for viewing and editing boards.
       parameters: []
       responses:
         '200':
@@ -335,7 +334,7 @@ paths:
       - boards
     put:
       operationId: boards_update
-      description: ''
+      description: ViewSet for viewing and editing boards.
       parameters:
       - name: data
         in: body
@@ -351,7 +350,7 @@ paths:
       - boards
     patch:
       operationId: boards_partial_update
-      description: ''
+      description: ViewSet for viewing and editing boards.
       parameters:
       - name: data
         in: body
@@ -367,7 +366,7 @@ paths:
       - boards
     delete:
       operationId: boards_delete
-      description: ''
+      description: ViewSet for viewing and editing boards.
       parameters: []
       responses:
         '204':
@@ -375,11 +374,59 @@ paths:
       tags:
       - boards
     parameters:
-    - name: board_id
+    - name: id
       in: path
-      description: A unique integer value identifying this board.
       required: true
-      type: integer
+      type: string
+  /boards/{id}/invite/:
+    post:
+      operationId: boards_invite
+      description: Invite a user to the board by email.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          required:
+          - email
+          type: object
+          properties:
+            email:
+              description: Email of the user to invite
+              type: string
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardInvitation'
+        '400':
+          description: Bad Request
+      tags:
+      - boards
+    parameters:
+    - name: id
+      in: path
+      required: true
+      type: string
+  /boards/{id}/members/:
+    get:
+      operationId: boards_members
+      description: Get all members of the board.
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BoardMember'
+      tags:
+      - boards
+    parameters:
+    - name: id
+      in: path
+      required: true
+      type: string
   /card-labels/:
     get:
       operationId: card-labels_list
@@ -563,7 +610,7 @@ paths:
   /cards/:
     get:
       operationId: cards_list
-      description: ''
+      description: ViewSet for viewing and editing cards.
       parameters: []
       responses:
         '200':
@@ -576,7 +623,7 @@ paths:
       - cards
     post:
       operationId: cards_create
-      description: ''
+      description: ViewSet for viewing and editing cards.
       parameters:
       - name: data
         in: body
@@ -591,10 +638,10 @@ paths:
       tags:
       - cards
     parameters: []
-  /cards/{card_id}/:
+  /cards/{id}/:
     get:
       operationId: cards_read
-      description: ''
+      description: ViewSet for viewing and editing cards.
       parameters: []
       responses:
         '200':
@@ -605,7 +652,7 @@ paths:
       - cards
     put:
       operationId: cards_update
-      description: ''
+      description: ViewSet for viewing and editing cards.
       parameters:
       - name: data
         in: body
@@ -621,7 +668,7 @@ paths:
       - cards
     patch:
       operationId: cards_partial_update
-      description: ''
+      description: ViewSet for viewing and editing cards.
       parameters:
       - name: data
         in: body
@@ -637,7 +684,7 @@ paths:
       - cards
     delete:
       operationId: cards_delete
-      description: ''
+      description: ViewSet for viewing and editing cards.
       parameters: []
       responses:
         '204':
@@ -645,11 +692,45 @@ paths:
       tags:
       - cards
     parameters:
-    - name: card_id
+    - name: id
       in: path
-      description: A unique integer value identifying this card.
       required: true
-      type: integer
+      type: string
+  /cards/{id}/move/:
+    post:
+      operationId: cards_move
+      description: Move a card to a new position or list.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          required:
+          - position
+          type: object
+          properties:
+            position:
+              description: New position of the card
+              type: integer
+            list_id:
+              description: ID of the new list to move to (optional)
+              type: integer
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Card'
+        '400':
+          description: Bad Request
+        '404':
+          description: List not found
+      tags:
+      - cards
+    parameters:
+    - name: id
+      in: path
+      required: true
+      type: string
   /checklist-items/:
     get:
       operationId: checklist-items_list
@@ -861,7 +942,7 @@ paths:
       tags:
       - comments
     parameters: []
-  /comments/{comment_id}/:
+  /comments/{id}/:
     get:
       operationId: comments_read
       description: ''
@@ -915,9 +996,116 @@ paths:
       tags:
       - comments
     parameters:
-    - name: comment_id
+    - name: id
       in: path
-      description: A unique integer value identifying this comment.
+      required: true
+      type: string
+  /invitations/:
+    get:
+      operationId: invitations_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BoardInvitation'
+      tags:
+      - invitations
+    post:
+      operationId: invitations_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/BoardInvitation'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardInvitation'
+      tags:
+      - invitations
+    parameters: []
+  /invitations/accept/:
+    post:
+      operationId: invitations_accept
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/BoardInvitation'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardInvitation'
+      tags:
+      - invitations
+    parameters: []
+  /invitations/{id}/:
+    get:
+      operationId: invitations_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardInvitation'
+      tags:
+      - invitations
+    put:
+      operationId: invitations_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/BoardInvitation'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardInvitation'
+      tags:
+      - invitations
+    patch:
+      operationId: invitations_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/BoardInvitation'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardInvitation'
+      tags:
+      - invitations
+    delete:
+      operationId: invitations_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - invitations
+    parameters:
+    - name: id
+      in: path
+      description: A unique integer value identifying this board invitation.
       required: true
       type: integer
   /labels/:
@@ -1041,7 +1229,7 @@ paths:
       tags:
       - lists
     parameters: []
-  /lists/{list_id}/:
+  /lists/{id}/:
     get:
       operationId: lists_read
       description: ''
@@ -1095,11 +1283,10 @@ paths:
       tags:
       - lists
     parameters:
-    - name: list_id
+    - name: id
       in: path
-      description: A unique integer value identifying this list.
       required: true
-      type: integer
+      type: string
   /login/:
     post:
       operationId: login_create
@@ -1261,6 +1448,51 @@ paths:
       required: true
       type: integer
 definitions:
+  User:
+    required:
+    - username
+    - email
+    - password
+    type: object
+    properties:
+      user_id:
+        title: User id
+        type: integer
+        readOnly: true
+      username:
+        title: Username
+        type: string
+        maxLength: 50
+        minLength: 1
+      email:
+        title: Email
+        type: string
+        format: email
+        maxLength: 100
+        minLength: 1
+      first_name:
+        title: First name
+        type: string
+        maxLength: 50
+      last_name:
+        title: Last name
+        type: string
+        maxLength: 50
+      bio:
+        title: Bio
+        type: string
+        x-nullable: true
+      avatar_url:
+        title: Avatar url
+        type: string
+        format: uri
+        maxLength: 500
+        x-nullable: true
+      password:
+        title: Password
+        type: string
+        maxLength: 128
+        minLength: 1
   Activity:
     required:
     - action_type
@@ -1273,6 +1505,8 @@ definitions:
         title: Activity id
         type: integer
         readOnly: true
+      user_details:
+        $ref: '#/definitions/User'
       action_type:
         title: Action type
         type: string
@@ -1303,11 +1537,11 @@ definitions:
         type: integer
   Attachment:
     required:
+    - card
     - filename
     - url
     - mime_type
     - size
-    - card
     - uploaded_by
     type: object
     properties:
@@ -1315,6 +1549,9 @@ definitions:
         title: Attach id
         type: integer
         readOnly: true
+      card:
+        title: Card
+        type: integer
       filename:
         title: Filename
         type: string
@@ -1335,12 +1572,16 @@ definitions:
         type: integer
         maximum: 9223372036854775807
         minimum: -9223372036854775808
-      card:
-        title: Card
-        type: integer
       uploaded_by:
         title: Uploaded by
         type: integer
+      uploaded_by_details:
+        $ref: '#/definitions/User'
+      uploaded_at:
+        title: Uploaded at
+        type: string
+        format: date-time
+        readOnly: true
   BoardMember:
     required:
     - board
@@ -1351,61 +1592,51 @@ definitions:
         title: ID
         type: integer
         readOnly: true
-      role:
-        title: Role
-        type: string
-        enum:
-        - admin
-        - member
       board:
         title: Board
         type: integer
       user:
         title: User
         type: integer
-  Board:
+      user_details:
+        $ref: '#/definitions/User'
+      role:
+        title: Role
+        type: string
+        enum:
+        - admin
+        - member
+        - observer
+      joined_at:
+        title: Joined at
+        type: string
+        format: date-time
+        readOnly: true
+  Label:
     required:
-    - name
+    - color
+    - board
     type: object
     properties:
-      board_id:
-        title: Board id
+      label_id:
+        title: Label id
         type: integer
         readOnly: true
       name:
         title: Name
         type: string
-        maxLength: 100
+        maxLength: 50
+      color:
+        title: Color
+        type: string
+        maxLength: 20
         minLength: 1
-      description:
-        title: Description
-        type: string
-        x-nullable: true
-      visibility:
-        title: Visibility
-        type: string
-        enum:
-        - public
-        - private
-      position:
-        title: Position
+      archived:
+        title: Archived
+        type: boolean
+      board:
+        title: Board
         type: integer
-        maximum: 9223372036854775807
-        minimum: -9223372036854775808
-      created_at:
-        title: Created at
-        type: string
-        format: date-time
-        readOnly: true
-      updated_at:
-        title: Updated at
-        type: string
-        format: date-time
-        readOnly: true
-      creator:
-        title: Creator
-        type: integer
-        readOnly: true
   CardLabel:
     required:
     - card
@@ -1422,6 +1653,8 @@ definitions:
       label:
         title: Label
         type: integer
+      label_details:
+        $ref: '#/definitions/Label'
   CardMember:
     required:
     - card
@@ -1438,6 +1671,78 @@ definitions:
       user:
         title: User
         type: integer
+      user_details:
+        $ref: '#/definitions/User'
+      added_at:
+        title: Added at
+        type: string
+        format: date-time
+        readOnly: true
+  ChecklistItem:
+    required:
+    - name
+    - position
+    - checklist
+    type: object
+    properties:
+      item_id:
+        title: Item id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 200
+        minLength: 1
+      checked:
+        title: Checked
+        type: boolean
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      checklist:
+        title: Checklist
+        type: integer
+  Checklist:
+    required:
+    - card
+    - name
+    type: object
+    properties:
+      checklist_id:
+        title: Checklist id
+        type: integer
+        readOnly: true
+      card:
+        title: Card
+        type: integer
+      name:
+        title: Name
+        type: string
+        maxLength: 100
+        minLength: 1
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/ChecklistItem'
+        readOnly: true
   Card:
     required:
     - title
@@ -1450,6 +1755,30 @@ definitions:
         title: Card id
         type: integer
         readOnly: true
+      labels:
+        type: array
+        items:
+          $ref: '#/definitions/CardLabel'
+        readOnly: true
+      members:
+        type: array
+        items:
+          $ref: '#/definitions/CardMember'
+        readOnly: true
+      checklists:
+        type: array
+        items:
+          $ref: '#/definitions/Checklist'
+        readOnly: true
+      attachments:
+        type: array
+        items:
+          $ref: '#/definitions/Attachment'
+        readOnly: true
+      comments_count:
+        title: Comments count
+        type: integer
+        readOnly: true
       title:
         title: Title
         type: string
@@ -1459,10 +1788,24 @@ definitions:
         title: Description
         type: string
         x-nullable: true
+      start_date:
+        title: Start date
+        type: string
+        format: date-time
+        x-nullable: true
       due_date:
         title: Due date
         type: string
         format: date-time
+        x-nullable: true
+      due_date_complete:
+        title: Due date complete
+        type: boolean
+      cover_image_url:
+        title: Cover image url
+        type: string
+        format: uri
+        maxLength: 500
         x-nullable: true
       position:
         title: Position
@@ -1488,104 +1831,6 @@ definitions:
       board:
         title: Board
         type: integer
-  ChecklistItem:
-    required:
-    - name
-    - position
-    - checklist
-    type: object
-    properties:
-      item_id:
-        title: Item id
-        type: integer
-        readOnly: true
-      name:
-        title: Name
-        type: string
-        maxLength: 200
-        minLength: 1
-      checked:
-        title: Checked
-        type: boolean
-      position:
-        title: Position
-        type: integer
-        maximum: 9223372036854775807
-        minimum: -9223372036854775808
-      checklist:
-        title: Checklist
-        type: integer
-  Checklist:
-    required:
-    - name
-    - card
-    type: object
-    properties:
-      checklist_id:
-        title: Checklist id
-        type: integer
-        readOnly: true
-      name:
-        title: Name
-        type: string
-        maxLength: 100
-        minLength: 1
-      card:
-        title: Card
-        type: integer
-  Comment:
-    required:
-    - content
-    - card
-    - user
-    type: object
-    properties:
-      comment_id:
-        title: Comment id
-        type: integer
-        readOnly: true
-      content:
-        title: Content
-        type: string
-        minLength: 1
-      created_at:
-        title: Created at
-        type: string
-        format: date-time
-        readOnly: true
-      card:
-        title: Card
-        type: integer
-      user:
-        title: User
-        type: integer
-  Label:
-    required:
-    - name
-    - color
-    - board
-    type: object
-    properties:
-      label_id:
-        title: Label id
-        type: integer
-        readOnly: true
-      name:
-        title: Name
-        type: string
-        maxLength: 50
-        minLength: 1
-      color:
-        title: Color
-        type: string
-        maxLength: 20
-        minLength: 1
-      archived:
-        title: Archived
-        type: boolean
-      board:
-        title: Board
-        type: integer
   List:
     required:
     - name
@@ -1597,6 +1842,11 @@ definitions:
         title: List id
         type: integer
         readOnly: true
+      cards:
+        type: array
+        items:
+          $ref: '#/definitions/Card'
+        readOnly: true
       name:
         title: Name
         type: string
@@ -1615,9 +1865,160 @@ definitions:
         type: string
         format: date-time
         readOnly: true
+      updated_at:
+        title: Updated at
+        type: string
+        format: date-time
+        readOnly: true
       board:
         title: Board
         type: integer
+  Board:
+    required:
+    - name
+    type: object
+    properties:
+      board_id:
+        title: Board id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 100
+        minLength: 1
+      description:
+        title: Description
+        type: string
+        x-nullable: true
+      visibility:
+        title: Visibility
+        type: string
+        enum:
+        - public
+        - private
+        - workspace
+      background_type:
+        title: Background type
+        type: string
+        maxLength: 20
+        minLength: 1
+      background_value:
+        title: Background value
+        type: string
+        maxLength: 500
+        minLength: 1
+      creator:
+        title: Creator
+        type: integer
+        readOnly: true
+      creator_details:
+        $ref: '#/definitions/User'
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      is_closed:
+        title: Is closed
+        type: boolean
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      updated_at:
+        title: Updated at
+        type: string
+        format: date-time
+        readOnly: true
+      lists:
+        type: array
+        items:
+          $ref: '#/definitions/List'
+        readOnly: true
+      members:
+        type: array
+        items:
+          $ref: '#/definitions/BoardMember'
+        readOnly: true
+  BoardInvitation:
+    required:
+    - board
+    - inviter
+    - email
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      board:
+        title: Board
+        type: integer
+      board_name:
+        title: Board name
+        type: string
+        readOnly: true
+        minLength: 1
+      inviter:
+        title: Inviter
+        type: integer
+      inviter_details:
+        $ref: '#/definitions/User'
+      email:
+        title: Email
+        type: string
+        format: email
+        maxLength: 254
+        minLength: 1
+      token:
+        title: Token
+        type: string
+        format: uuid
+        readOnly: true
+      accepted:
+        title: Accepted
+        type: boolean
+        readOnly: true
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+  Comment:
+    required:
+    - card
+    - user
+    - content
+    type: object
+    properties:
+      comment_id:
+        title: Comment id
+        type: integer
+        readOnly: true
+      card:
+        title: Card
+        type: integer
+      user:
+        title: User
+        type: integer
+      user_details:
+        $ref: '#/definitions/User'
+      content:
+        title: Content
+        type: string
+        minLength: 1
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      updated_at:
+        title: Updated at
+        type: string
+        format: date-time
+        readOnly: true
   Login:
     required:
     - email
@@ -1632,31 +2033,4 @@ definitions:
       password:
         title: Password
         type: string
-        minLength: 1
-  User:
-    required:
-    - username
-    - email
-    - password
-    type: object
-    properties:
-      user_id:
-        title: User id
-        type: integer
-        readOnly: true
-      username:
-        title: Username
-        type: string
-        maxLength: 50
-        minLength: 1
-      email:
-        title: Email
-        type: string
-        format: email
-        maxLength: 100
-        minLength: 1
-      password:
-        title: Password
-        type: string
-        maxLength: 128
         minLength: 1

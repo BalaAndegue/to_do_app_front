@@ -32,12 +32,12 @@ export class BoardMembersService {
         });
     }
     /**
-     * @param id A unique integer value identifying this board member.
+     * @param id
      * @returns BoardMember
      * @throws ApiError
      */
     public static boardMembersRead(
-        id: number,
+        id: string,
     ): CancelablePromise<BoardMember> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -48,13 +48,13 @@ export class BoardMembersService {
         });
     }
     /**
-     * @param id A unique integer value identifying this board member.
+     * @param id
      * @param data
      * @returns BoardMember
      * @throws ApiError
      */
     public static boardMembersUpdate(
-        id: number,
+        id: string,
         data: BoardMember,
     ): CancelablePromise<BoardMember> {
         return __request(OpenAPI, {
@@ -67,13 +67,13 @@ export class BoardMembersService {
         });
     }
     /**
-     * @param id A unique integer value identifying this board member.
+     * @param id
      * @param data
      * @returns BoardMember
      * @throws ApiError
      */
     public static boardMembersPartialUpdate(
-        id: number,
+        id: string,
         data: BoardMember,
     ): CancelablePromise<BoardMember> {
         return __request(OpenAPI, {
@@ -86,12 +86,12 @@ export class BoardMembersService {
         });
     }
     /**
-     * @param id A unique integer value identifying this board member.
+     * @param id
      * @returns void
      * @throws ApiError
      */
     public static boardMembersDelete(
-        id: number,
+        id: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',

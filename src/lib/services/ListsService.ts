@@ -32,72 +32,72 @@ export class ListsService {
         });
     }
     /**
-     * @param listId A unique integer value identifying this list.
+     * @param id
      * @returns List
      * @throws ApiError
      */
     public static listsRead(
-        listId: number,
+        id: string,
     ): CancelablePromise<List> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/lists/{list_id}/',
+            url: '/lists/{id}/',
             path: {
-                'list_id': listId,
+                'id': id,
             },
         });
     }
     /**
-     * @param listId A unique integer value identifying this list.
+     * @param id
      * @param data
      * @returns List
      * @throws ApiError
      */
     public static listsUpdate(
-        listId: number,
+        id: string,
         data: List,
     ): CancelablePromise<List> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/lists/{list_id}/',
+            url: '/lists/{id}/',
             path: {
-                'list_id': listId,
+                'id': id,
             },
             body: data,
         });
     }
     /**
-     * @param listId A unique integer value identifying this list.
+     * @param id
      * @param data
      * @returns List
      * @throws ApiError
      */
     public static listsPartialUpdate(
-        listId: number,
+        id: string,
         data: List,
     ): CancelablePromise<List> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/lists/{list_id}/',
+            url: '/lists/{id}/',
             path: {
-                'list_id': listId,
+                'id': id,
             },
             body: data,
         });
     }
     /**
-     * @param listId A unique integer value identifying this list.
+     * @param id
      * @returns void
      * @throws ApiError
      */
     public static listsDelete(
-        listId: number,
+        id: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/lists/{list_id}/',
+            url: '/lists/{id}/',
             path: {
-                'list_id': listId,
+                'id': id,
             },
         });
     }
