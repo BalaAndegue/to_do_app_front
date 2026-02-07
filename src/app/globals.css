@@ -2,25 +2,64 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #161616;
+  --card-bg: #ffffff;
+  --accent: #f1c40f;
+  --border-light: #e0e0e0;
+  --border-yellow: #f1c40f;
+  --sidebar-width: 256px;
+  --ibm-blue-60: #0f62fe;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-accent: var(--accent);
+  --color-border-yellow: var(--border-yellow);
+  --font-sans: var(--font-geist-sans), Inter, system-ui;
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+.ibm-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-left: 4px solid var(--border-yellow);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+
+.ibm-card:hover {
+  background: #f4f4f4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.ibm-sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  color: #161616;
+  text-decoration: none;
+  transition: background-color 0.1s;
+}
+
+.ibm-sidebar-item:hover {
+  background-color: #e5e5e5;
+}
+
+.ibm-sidebar-item.active {
+  background-color: #e5e5e5;
+  border-left: 4px solid var(--ibm-blue-60);
+}
+
