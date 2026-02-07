@@ -320,7 +320,7 @@ paths:
       tags:
       - boards
     parameters: []
-  /boards/{id}/:
+  /boards/{board_id}/:
     get:
       operationId: boards_read
       description: ViewSet for viewing and editing boards.
@@ -374,11 +374,11 @@ paths:
       tags:
       - boards
     parameters:
-    - name: id
+    - name: board_id
       in: path
       required: true
       type: string
-  /boards/{id}/invite/:
+  /boards/{board_id}/invite/:
     post:
       operationId: boards_invite
       description: Invite a user to the board by email.
@@ -404,11 +404,11 @@ paths:
       tags:
       - boards
     parameters:
-    - name: id
+    - name: board_id
       in: path
       required: true
       type: string
-  /boards/{id}/members/:
+  /boards/{board_id}/members/:
     get:
       operationId: boards_members
       description: Get all members of the board.
@@ -423,7 +423,7 @@ paths:
       tags:
       - boards
     parameters:
-    - name: id
+    - name: board_id
       in: path
       required: true
       type: string
@@ -638,7 +638,7 @@ paths:
       tags:
       - cards
     parameters: []
-  /cards/{id}/:
+  /cards/{card_id}/:
     get:
       operationId: cards_read
       description: ViewSet for viewing and editing cards.
@@ -692,11 +692,11 @@ paths:
       tags:
       - cards
     parameters:
-    - name: id
+    - name: card_id
       in: path
       required: true
       type: string
-  /cards/{id}/move/:
+  /cards/{card_id}/move/:
     post:
       operationId: cards_move
       description: Move a card to a new position or list.
@@ -727,7 +727,7 @@ paths:
       tags:
       - cards
     parameters:
-    - name: id
+    - name: card_id
       in: path
       required: true
       type: string
@@ -942,7 +942,7 @@ paths:
       tags:
       - comments
     parameters: []
-  /comments/{id}/:
+  /comments/{comment_id}/:
     get:
       operationId: comments_read
       description: ''
@@ -996,7 +996,7 @@ paths:
       tags:
       - comments
     parameters:
-    - name: id
+    - name: comment_id
       in: path
       required: true
       type: string
@@ -1229,7 +1229,7 @@ paths:
       tags:
       - lists
     parameters: []
-  /lists/{id}/:
+  /lists/{list_id}/:
     get:
       operationId: lists_read
       description: ''
@@ -1283,7 +1283,7 @@ paths:
       tags:
       - lists
     parameters:
-    - name: id
+    - name: list_id
       in: path
       required: true
       type: string

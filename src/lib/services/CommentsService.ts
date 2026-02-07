@@ -32,72 +32,72 @@ export class CommentsService {
         });
     }
     /**
-     * @param id
+     * @param commentId
      * @returns Comment
      * @throws ApiError
      */
     public static commentsRead(
-        id: string,
+        commentId: string,
     ): CancelablePromise<Comment> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/comments/{id}/',
+            url: '/comments/{comment_id}/',
             path: {
-                'id': id,
+                'comment_id': commentId,
             },
         });
     }
     /**
-     * @param id
+     * @param commentId
      * @param data
      * @returns Comment
      * @throws ApiError
      */
     public static commentsUpdate(
-        id: string,
+        commentId: string,
         data: Comment,
     ): CancelablePromise<Comment> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/comments/{id}/',
+            url: '/comments/{comment_id}/',
             path: {
-                'id': id,
+                'comment_id': commentId,
             },
             body: data,
         });
     }
     /**
-     * @param id
+     * @param commentId
      * @param data
      * @returns Comment
      * @throws ApiError
      */
     public static commentsPartialUpdate(
-        id: string,
+        commentId: string,
         data: Comment,
     ): CancelablePromise<Comment> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/comments/{id}/',
+            url: '/comments/{comment_id}/',
             path: {
-                'id': id,
+                'comment_id': commentId,
             },
             body: data,
         });
     }
     /**
-     * @param id
+     * @param commentId
      * @returns void
      * @throws ApiError
      */
     public static commentsDelete(
-        id: string,
+        commentId: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/comments/{id}/',
+            url: '/comments/{comment_id}/',
             path: {
-                'id': id,
+                'comment_id': commentId,
             },
         });
     }

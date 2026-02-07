@@ -35,87 +35,87 @@ export class CardsService {
     }
     /**
      * ViewSet for viewing and editing cards.
-     * @param id
+     * @param cardId
      * @returns Card
      * @throws ApiError
      */
     public static cardsRead(
-        id: string,
+        cardId: string,
     ): CancelablePromise<Card> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/cards/{id}/',
+            url: '/cards/{card_id}/',
             path: {
-                'id': id,
+                'card_id': cardId,
             },
         });
     }
     /**
      * ViewSet for viewing and editing cards.
-     * @param id
+     * @param cardId
      * @param data
      * @returns Card
      * @throws ApiError
      */
     public static cardsUpdate(
-        id: string,
+        cardId: string,
         data: Card,
     ): CancelablePromise<Card> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/cards/{id}/',
+            url: '/cards/{card_id}/',
             path: {
-                'id': id,
+                'card_id': cardId,
             },
             body: data,
         });
     }
     /**
      * ViewSet for viewing and editing cards.
-     * @param id
+     * @param cardId
      * @param data
      * @returns Card
      * @throws ApiError
      */
     public static cardsPartialUpdate(
-        id: string,
+        cardId: string,
         data: Card,
     ): CancelablePromise<Card> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/cards/{id}/',
+            url: '/cards/{card_id}/',
             path: {
-                'id': id,
+                'card_id': cardId,
             },
             body: data,
         });
     }
     /**
      * ViewSet for viewing and editing cards.
-     * @param id
+     * @param cardId
      * @returns void
      * @throws ApiError
      */
     public static cardsDelete(
-        id: string,
+        cardId: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/cards/{id}/',
+            url: '/cards/{card_id}/',
             path: {
-                'id': id,
+                'card_id': cardId,
             },
         });
     }
     /**
      * Move a card to a new position or list.
-     * @param id
+     * @param cardId
      * @param data
      * @returns Card
      * @throws ApiError
      */
     public static cardsMove(
-        id: string,
+        cardId: string,
         data: {
             /**
              * New position of the card
@@ -129,9 +129,9 @@ export class CardsService {
     ): CancelablePromise<Card> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/cards/{id}/move/',
+            url: '/cards/{card_id}/move/',
             path: {
-                'id': id,
+                'card_id': cardId,
             },
             body: data,
             errors: {

@@ -32,72 +32,72 @@ export class ListsService {
         });
     }
     /**
-     * @param id
+     * @param listId
      * @returns List
      * @throws ApiError
      */
     public static listsRead(
-        id: string,
+        listId: string,
     ): CancelablePromise<List> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/lists/{id}/',
+            url: '/lists/{list_id}/',
             path: {
-                'id': id,
+                'list_id': listId,
             },
         });
     }
     /**
-     * @param id
+     * @param listId
      * @param data
      * @returns List
      * @throws ApiError
      */
     public static listsUpdate(
-        id: string,
+        listId: string,
         data: List,
     ): CancelablePromise<List> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/lists/{id}/',
+            url: '/lists/{list_id}/',
             path: {
-                'id': id,
+                'list_id': listId,
             },
             body: data,
         });
     }
     /**
-     * @param id
+     * @param listId
      * @param data
      * @returns List
      * @throws ApiError
      */
     public static listsPartialUpdate(
-        id: string,
+        listId: string,
         data: List,
     ): CancelablePromise<List> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/lists/{id}/',
+            url: '/lists/{list_id}/',
             path: {
-                'id': id,
+                'list_id': listId,
             },
             body: data,
         });
     }
     /**
-     * @param id
+     * @param listId
      * @returns void
      * @throws ApiError
      */
     public static listsDelete(
-        id: string,
+        listId: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/lists/{id}/',
+            url: '/lists/{list_id}/',
             path: {
-                'id': id,
+                'list_id': listId,
             },
         });
     }

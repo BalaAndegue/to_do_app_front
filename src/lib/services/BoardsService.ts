@@ -37,87 +37,87 @@ export class BoardsService {
     }
     /**
      * ViewSet for viewing and editing boards.
-     * @param id
+     * @param boardId
      * @returns Board
      * @throws ApiError
      */
     public static boardsRead(
-        id: string,
+        boardId: string,
     ): CancelablePromise<Board> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/boards/{id}/',
+            url: '/boards/{board_id}/',
             path: {
-                'id': id,
+                'board_id': boardId,
             },
         });
     }
     /**
      * ViewSet for viewing and editing boards.
-     * @param id
+     * @param boardId
      * @param data
      * @returns Board
      * @throws ApiError
      */
     public static boardsUpdate(
-        id: string,
+        boardId: string,
         data: Board,
     ): CancelablePromise<Board> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/boards/{id}/',
+            url: '/boards/{board_id}/',
             path: {
-                'id': id,
+                'board_id': boardId,
             },
             body: data,
         });
     }
     /**
      * ViewSet for viewing and editing boards.
-     * @param id
+     * @param boardId
      * @param data
      * @returns Board
      * @throws ApiError
      */
     public static boardsPartialUpdate(
-        id: string,
+        boardId: string,
         data: Board,
     ): CancelablePromise<Board> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/boards/{id}/',
+            url: '/boards/{board_id}/',
             path: {
-                'id': id,
+                'board_id': boardId,
             },
             body: data,
         });
     }
     /**
      * ViewSet for viewing and editing boards.
-     * @param id
+     * @param boardId
      * @returns void
      * @throws ApiError
      */
     public static boardsDelete(
-        id: string,
+        boardId: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/boards/{id}/',
+            url: '/boards/{board_id}/',
             path: {
-                'id': id,
+                'board_id': boardId,
             },
         });
     }
     /**
      * Invite a user to the board by email.
-     * @param id
+     * @param boardId
      * @param data
      * @returns BoardInvitation
      * @throws ApiError
      */
     public static boardsInvite(
-        id: string,
+        boardId: string,
         data: {
             /**
              * Email of the user to invite
@@ -127,9 +127,9 @@ export class BoardsService {
     ): CancelablePromise<BoardInvitation> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/boards/{id}/invite/',
+            url: '/boards/{board_id}/invite/',
             path: {
-                'id': id,
+                'board_id': boardId,
             },
             body: data,
             errors: {
@@ -139,18 +139,18 @@ export class BoardsService {
     }
     /**
      * Get all members of the board.
-     * @param id
+     * @param boardId
      * @returns BoardMember
      * @throws ApiError
      */
     public static boardsMembers(
-        id: string,
+        boardId: string,
     ): CancelablePromise<Array<BoardMember>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/boards/{id}/members/',
+            url: '/boards/{board_id}/members/',
             path: {
-                'id': id,
+                'board_id': boardId,
             },
         });
     }
