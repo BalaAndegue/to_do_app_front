@@ -1,0 +1,1662 @@
+swagger: '2.0'
+info:
+  title: TO Do App API
+  description: Documentation de l'API
+  version: v1
+host: 127.0.0.1:8000
+schemes:
+- http
+basePath: /api
+consumes:
+- application/json
+produces:
+- application/json
+securityDefinitions:
+  Token:
+    type: apiKey
+    in: header
+    name: Authorization
+    description: 'Format : Token <votre_token>'
+security:
+- Token: []
+paths:
+  /activities/:
+    get:
+      operationId: activities_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Activity'
+      tags:
+      - activities
+    post:
+      operationId: activities_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Activity'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/Activity'
+      tags:
+      - activities
+    parameters: []
+  /activities/{activity_id}/:
+    get:
+      operationId: activities_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Activity'
+      tags:
+      - activities
+    put:
+      operationId: activities_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Activity'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Activity'
+      tags:
+      - activities
+    patch:
+      operationId: activities_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Activity'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Activity'
+      tags:
+      - activities
+    delete:
+      operationId: activities_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - activities
+    parameters:
+    - name: activity_id
+      in: path
+      description: A unique integer value identifying this activity.
+      required: true
+      type: integer
+  /attachments/:
+    get:
+      operationId: attachments_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Attachment'
+      tags:
+      - attachments
+    post:
+      operationId: attachments_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Attachment'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/Attachment'
+      tags:
+      - attachments
+    parameters: []
+  /attachments/{attach_id}/:
+    get:
+      operationId: attachments_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Attachment'
+      tags:
+      - attachments
+    put:
+      operationId: attachments_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Attachment'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Attachment'
+      tags:
+      - attachments
+    patch:
+      operationId: attachments_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Attachment'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Attachment'
+      tags:
+      - attachments
+    delete:
+      operationId: attachments_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - attachments
+    parameters:
+    - name: attach_id
+      in: path
+      description: A unique integer value identifying this attachment.
+      required: true
+      type: integer
+  /board-members/:
+    get:
+      operationId: board-members_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BoardMember'
+      tags:
+      - board-members
+    post:
+      operationId: board-members_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/BoardMember'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardMember'
+      tags:
+      - board-members
+    parameters: []
+  /board-members/{id}/:
+    get:
+      operationId: board-members_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardMember'
+      tags:
+      - board-members
+    put:
+      operationId: board-members_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/BoardMember'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardMember'
+      tags:
+      - board-members
+    patch:
+      operationId: board-members_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/BoardMember'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/BoardMember'
+      tags:
+      - board-members
+    delete:
+      operationId: board-members_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - board-members
+    parameters:
+    - name: id
+      in: path
+      description: A unique integer value identifying this board member.
+      required: true
+      type: integer
+  /boards/:
+    get:
+      operationId: boards_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Board'
+      tags:
+      - boards
+    post:
+      operationId: boards_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Board'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/Board'
+      tags:
+      - boards
+    parameters: []
+  /boards/{board_id}/:
+    get:
+      operationId: boards_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Board'
+      tags:
+      - boards
+    put:
+      operationId: boards_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Board'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Board'
+      tags:
+      - boards
+    patch:
+      operationId: boards_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Board'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Board'
+      tags:
+      - boards
+    delete:
+      operationId: boards_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - boards
+    parameters:
+    - name: board_id
+      in: path
+      description: A unique integer value identifying this board.
+      required: true
+      type: integer
+  /card-labels/:
+    get:
+      operationId: card-labels_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CardLabel'
+      tags:
+      - card-labels
+    post:
+      operationId: card-labels_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CardLabel'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardLabel'
+      tags:
+      - card-labels
+    parameters: []
+  /card-labels/{id}/:
+    get:
+      operationId: card-labels_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardLabel'
+      tags:
+      - card-labels
+    put:
+      operationId: card-labels_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CardLabel'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardLabel'
+      tags:
+      - card-labels
+    patch:
+      operationId: card-labels_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CardLabel'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardLabel'
+      tags:
+      - card-labels
+    delete:
+      operationId: card-labels_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - card-labels
+    parameters:
+    - name: id
+      in: path
+      description: A unique integer value identifying this card label.
+      required: true
+      type: integer
+  /card-members/:
+    get:
+      operationId: card-members_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CardMember'
+      tags:
+      - card-members
+    post:
+      operationId: card-members_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CardMember'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardMember'
+      tags:
+      - card-members
+    parameters: []
+  /card-members/{id}/:
+    get:
+      operationId: card-members_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardMember'
+      tags:
+      - card-members
+    put:
+      operationId: card-members_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CardMember'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardMember'
+      tags:
+      - card-members
+    patch:
+      operationId: card-members_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CardMember'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardMember'
+      tags:
+      - card-members
+    delete:
+      operationId: card-members_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - card-members
+    parameters:
+    - name: id
+      in: path
+      description: A unique integer value identifying this card member.
+      required: true
+      type: integer
+  /cards/:
+    get:
+      operationId: cards_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Card'
+      tags:
+      - cards
+    post:
+      operationId: cards_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Card'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/Card'
+      tags:
+      - cards
+    parameters: []
+  /cards/{card_id}/:
+    get:
+      operationId: cards_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Card'
+      tags:
+      - cards
+    put:
+      operationId: cards_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Card'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Card'
+      tags:
+      - cards
+    patch:
+      operationId: cards_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Card'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Card'
+      tags:
+      - cards
+    delete:
+      operationId: cards_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - cards
+    parameters:
+    - name: card_id
+      in: path
+      description: A unique integer value identifying this card.
+      required: true
+      type: integer
+  /checklist-items/:
+    get:
+      operationId: checklist-items_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ChecklistItem'
+      tags:
+      - checklist-items
+    post:
+      operationId: checklist-items_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ChecklistItem'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/ChecklistItem'
+      tags:
+      - checklist-items
+    parameters: []
+  /checklist-items/{item_id}/:
+    get:
+      operationId: checklist-items_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ChecklistItem'
+      tags:
+      - checklist-items
+    put:
+      operationId: checklist-items_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ChecklistItem'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ChecklistItem'
+      tags:
+      - checklist-items
+    patch:
+      operationId: checklist-items_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ChecklistItem'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ChecklistItem'
+      tags:
+      - checklist-items
+    delete:
+      operationId: checklist-items_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - checklist-items
+    parameters:
+    - name: item_id
+      in: path
+      description: A unique integer value identifying this checklist item.
+      required: true
+      type: integer
+  /checklists/:
+    get:
+      operationId: checklists_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Checklist'
+      tags:
+      - checklists
+    post:
+      operationId: checklists_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Checklist'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/Checklist'
+      tags:
+      - checklists
+    parameters: []
+  /checklists/{checklist_id}/:
+    get:
+      operationId: checklists_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Checklist'
+      tags:
+      - checklists
+    put:
+      operationId: checklists_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Checklist'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Checklist'
+      tags:
+      - checklists
+    patch:
+      operationId: checklists_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Checklist'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Checklist'
+      tags:
+      - checklists
+    delete:
+      operationId: checklists_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - checklists
+    parameters:
+    - name: checklist_id
+      in: path
+      description: A unique integer value identifying this checklist.
+      required: true
+      type: integer
+  /comments/:
+    get:
+      operationId: comments_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Comment'
+      tags:
+      - comments
+    post:
+      operationId: comments_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Comment'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/Comment'
+      tags:
+      - comments
+    parameters: []
+  /comments/{comment_id}/:
+    get:
+      operationId: comments_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Comment'
+      tags:
+      - comments
+    put:
+      operationId: comments_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Comment'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Comment'
+      tags:
+      - comments
+    patch:
+      operationId: comments_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Comment'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Comment'
+      tags:
+      - comments
+    delete:
+      operationId: comments_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - comments
+    parameters:
+    - name: comment_id
+      in: path
+      description: A unique integer value identifying this comment.
+      required: true
+      type: integer
+  /labels/:
+    get:
+      operationId: labels_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Label'
+      tags:
+      - labels
+    post:
+      operationId: labels_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Label'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/Label'
+      tags:
+      - labels
+    parameters: []
+  /labels/{label_id}/:
+    get:
+      operationId: labels_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Label'
+      tags:
+      - labels
+    put:
+      operationId: labels_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Label'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Label'
+      tags:
+      - labels
+    patch:
+      operationId: labels_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Label'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Label'
+      tags:
+      - labels
+    delete:
+      operationId: labels_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - labels
+    parameters:
+    - name: label_id
+      in: path
+      description: A unique integer value identifying this label.
+      required: true
+      type: integer
+  /lists/:
+    get:
+      operationId: lists_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/List'
+      tags:
+      - lists
+    post:
+      operationId: lists_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/List'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/List'
+      tags:
+      - lists
+    parameters: []
+  /lists/{list_id}/:
+    get:
+      operationId: lists_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/List'
+      tags:
+      - lists
+    put:
+      operationId: lists_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/List'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/List'
+      tags:
+      - lists
+    patch:
+      operationId: lists_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/List'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/List'
+      tags:
+      - lists
+    delete:
+      operationId: lists_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - lists
+    parameters:
+    - name: list_id
+      in: path
+      description: A unique integer value identifying this list.
+      required: true
+      type: integer
+  /login/:
+    post:
+      operationId: login_create
+      description: API pour se connecter avec email et mot de passe.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Login'
+      responses:
+        '200':
+          description: Connexion réussie
+        '400':
+          description: Échec de connexion
+      tags:
+      - login
+    parameters: []
+  /logout/:
+    post:
+      operationId: logout_create
+      description: API pour se déconnecter (nécessite d'être authentifié).
+      parameters: []
+      responses:
+        '201':
+          description: ''
+      tags:
+      - logout
+    parameters: []
+  /register/:
+    post:
+      operationId: register_create
+      description: API pour enregistrer un nouvel utilisateur.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: Utilisateur créé avec succès
+        '400':
+          description: Erreur de validation
+      tags:
+      - register
+    parameters: []
+  /users/:
+    get:
+      operationId: users_list
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/User'
+      tags:
+      - users
+    post:
+      operationId: users_create
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/User'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/User'
+      tags:
+      - users
+    parameters: []
+  /users/{user_id}/:
+    get:
+      operationId: users_read
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/User'
+      tags:
+      - users
+    put:
+      operationId: users_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/User'
+      tags:
+      - users
+    patch:
+      operationId: users_partial_update
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/User'
+      tags:
+      - users
+    delete:
+      operationId: users_delete
+      description: ''
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - users
+    parameters:
+    - name: user_id
+      in: path
+      description: A unique integer value identifying this user.
+      required: true
+      type: integer
+  /users/{user_id}/reset_password/:
+    post:
+      operationId: users_reset_password
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/User'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/User'
+      tags:
+      - users
+    parameters:
+    - name: user_id
+      in: path
+      description: A unique integer value identifying this user.
+      required: true
+      type: integer
+definitions:
+  Activity:
+    required:
+    - action_type
+    - content
+    - board
+    - user
+    type: object
+    properties:
+      activity_id:
+        title: Activity id
+        type: integer
+        readOnly: true
+      action_type:
+        title: Action type
+        type: string
+        maxLength: 50
+        minLength: 1
+      content:
+        title: Content
+        type: string
+        minLength: 1
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      board:
+        title: Board
+        type: integer
+      card:
+        title: Card
+        type: integer
+        x-nullable: true
+      list:
+        title: List
+        type: integer
+        x-nullable: true
+      user:
+        title: User
+        type: integer
+  Attachment:
+    required:
+    - filename
+    - url
+    - mime_type
+    - size
+    - card
+    - uploaded_by
+    type: object
+    properties:
+      attach_id:
+        title: Attach id
+        type: integer
+        readOnly: true
+      filename:
+        title: Filename
+        type: string
+        maxLength: 255
+        minLength: 1
+      url:
+        title: Url
+        type: string
+        maxLength: 500
+        minLength: 1
+      mime_type:
+        title: Mime type
+        type: string
+        maxLength: 100
+        minLength: 1
+      size:
+        title: Size
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      card:
+        title: Card
+        type: integer
+      uploaded_by:
+        title: Uploaded by
+        type: integer
+  BoardMember:
+    required:
+    - board
+    - user
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      role:
+        title: Role
+        type: string
+        enum:
+        - admin
+        - member
+      board:
+        title: Board
+        type: integer
+      user:
+        title: User
+        type: integer
+  Board:
+    required:
+    - name
+    type: object
+    properties:
+      board_id:
+        title: Board id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 100
+        minLength: 1
+      description:
+        title: Description
+        type: string
+        x-nullable: true
+      visibility:
+        title: Visibility
+        type: string
+        enum:
+        - public
+        - private
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      updated_at:
+        title: Updated at
+        type: string
+        format: date-time
+        readOnly: true
+      creator:
+        title: Creator
+        type: integer
+        readOnly: true
+  CardLabel:
+    required:
+    - card
+    - label
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      card:
+        title: Card
+        type: integer
+      label:
+        title: Label
+        type: integer
+  CardMember:
+    required:
+    - card
+    - user
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      card:
+        title: Card
+        type: integer
+      user:
+        title: User
+        type: integer
+  Card:
+    required:
+    - title
+    - position
+    - list
+    - board
+    type: object
+    properties:
+      card_id:
+        title: Card id
+        type: integer
+        readOnly: true
+      title:
+        title: Title
+        type: string
+        maxLength: 255
+        minLength: 1
+      description:
+        title: Description
+        type: string
+        x-nullable: true
+      due_date:
+        title: Due date
+        type: string
+        format: date-time
+        x-nullable: true
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      archived:
+        title: Archived
+        type: boolean
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      updated_at:
+        title: Updated at
+        type: string
+        format: date-time
+        readOnly: true
+      list:
+        title: List
+        type: integer
+      board:
+        title: Board
+        type: integer
+  ChecklistItem:
+    required:
+    - name
+    - position
+    - checklist
+    type: object
+    properties:
+      item_id:
+        title: Item id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 200
+        minLength: 1
+      checked:
+        title: Checked
+        type: boolean
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      checklist:
+        title: Checklist
+        type: integer
+  Checklist:
+    required:
+    - name
+    - card
+    type: object
+    properties:
+      checklist_id:
+        title: Checklist id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 100
+        minLength: 1
+      card:
+        title: Card
+        type: integer
+  Comment:
+    required:
+    - content
+    - card
+    - user
+    type: object
+    properties:
+      comment_id:
+        title: Comment id
+        type: integer
+        readOnly: true
+      content:
+        title: Content
+        type: string
+        minLength: 1
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      card:
+        title: Card
+        type: integer
+      user:
+        title: User
+        type: integer
+  Label:
+    required:
+    - name
+    - color
+    - board
+    type: object
+    properties:
+      label_id:
+        title: Label id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 50
+        minLength: 1
+      color:
+        title: Color
+        type: string
+        maxLength: 20
+        minLength: 1
+      archived:
+        title: Archived
+        type: boolean
+      board:
+        title: Board
+        type: integer
+  List:
+    required:
+    - name
+    - position
+    - board
+    type: object
+    properties:
+      list_id:
+        title: List id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 100
+        minLength: 1
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      archived:
+        title: Archived
+        type: boolean
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      board:
+        title: Board
+        type: integer
+  Login:
+    required:
+    - email
+    - password
+    type: object
+    properties:
+      email:
+        title: Email
+        type: string
+        format: email
+        minLength: 1
+      password:
+        title: Password
+        type: string
+        minLength: 1
+  User:
+    required:
+    - username
+    - email
+    - password
+    type: object
+    properties:
+      user_id:
+        title: User id
+        type: integer
+        readOnly: true
+      username:
+        title: Username
+        type: string
+        maxLength: 50
+        minLength: 1
+      email:
+        title: Email
+        type: string
+        format: email
+        maxLength: 100
+        minLength: 1
+      password:
+        title: Password
+        type: string
+        maxLength: 128
+        minLength: 1
