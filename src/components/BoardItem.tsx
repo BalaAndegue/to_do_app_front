@@ -1,24 +1,41 @@
-import Link from "next/link";
 import { Board } from "@/lib";
 
-interface BoardItemProps {
-  board: Board;
-}
+export default function BoardItem({ board }: { board: Board }) {
+  const bg =
+    board.background_type === "color"
+      ? { backgroundColor: board.background_value }
+      : board.background_type === "image"
+        ? {
+            backgroundImage: `linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),url(${board.background_value})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }
+        : { background: "linear-gradient(135deg,#1e3a5f,#0f2040)" };
 
-export default function BoardItem({ board }: BoardItemProps) {
   return (
-    <Link href={`/board/${board.board_id}`}>
-      <div className="ibm-card p-6 cursor-pointer h-full min-h-[120px] flex flex-col justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-[#161616] mb-2">{board.name}</h3>
-          <p className="text-sm text-gray-500 line-clamp-2">
-            Click to view and manage tasks in this workspace.
-          </p>
-        </div>
-        <div className="text-xs text-[#0f62fe] font-medium mt-4 uppercase tracking-wider">
-          View board →
-        </div>
+    <a
+      href={`/board/${board.board_id}`}
+      className="group block overflow-hidden rounded-2xl border border-[var(--line)] shadow-card transition hover:shadow-card-lg"
+    >
+      {/* Cover */}
+      <div className="flex h-20 items-end p-3" style={bg}>
+        <span className="truncate text-sm font-black text-white drop-shadow">
+          {board.name}
+        </span>
       </div>
-    </Link>
+      {/* Footer */}
+      <div className="flex items-center justify-between bg-[var(--surface)] px-3 py-2">
+        {board.description ? (
+          <p className="truncate text-xs text-[var(--ink-2)]">{board.description}</p>
+        ) : (
+          <span className="text-xs italic text-[var(--ink-3)]">Aucune description</span>
+        )}
+        {board.is_closed && (
+          <span className="ml-2 flex-shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-600 dark:bg-orange-900/20 dark:text-orange-400">
+            Archivé
+          </span>
+        )}
+      </div>
+    </a>
   );
 }
