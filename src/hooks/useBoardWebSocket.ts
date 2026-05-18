@@ -37,7 +37,7 @@ export function useBoardWebSocket(boardId: number, options: Options = {}) {
 
     if (!token) return;
 
-    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api")
+    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://flowpilot-api.duckdns.org/api")
       .replace(/\/api\/?$/, "")
       .replace(/^https:/, "wss:")
       .replace(/^http:/, "ws:");

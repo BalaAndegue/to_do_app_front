@@ -251,7 +251,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
               </ul>
               <div className="mt-6 rounded-xl bg-white/5 p-4 border border-white/10">
                 <p className="text-xs font-bold text-brand-400">API Status</p>
-                <p className="mt-1 text-xs text-slate-400">localhost:8000 — REST v1</p>
+                <p className="mt-1 text-xs text-slate-400">flowpilot-api.duckdns.org — REST v1</p>
                 <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-bold text-green-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse-soft" />
                   En ligne
