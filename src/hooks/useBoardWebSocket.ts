@@ -6,10 +6,10 @@ import type { Card } from "@/lib/models/Card";
 import type { List } from "@/lib/models/List";
 
 type WsEvent =
-  | { type: "card.created" | "card.updated" | "card.moved"; data: Card }
-  | { type: "card.deleted"; data: { card_id: number } }
-  | { type: "list.created" | "list.updated" | "list.moved"; data: List }
-  | { type: "list.deleted"; data: { list_id: number } };
+  | { type: "card_created" | "card_updated" | "card_moved"; data: Card }
+  | { type: "card_deleted"; data: { card_id: number } }
+  | { type: "list_created" | "list_updated" | "list_moved"; data: List }
+  | { type: "list_deleted"; data: { list_id: number } };
 
 interface Options {
   onCardCreated?: (card: Card) => void;
@@ -60,14 +60,14 @@ export function useBoardWebSocket(boardId: number, options: Options = {}) {
           } = optionsRef.current;
 
           switch (msg.type) {
-            case "card.created": onCardCreated?.(msg.data); break;
-            case "card.updated": onCardUpdated?.(msg.data); break;
-            case "card.deleted": onCardDeleted?.(msg.data.card_id); break;
-            case "card.moved":   onCardMoved?.(msg.data); break;
-            case "list.created": onListCreated?.(msg.data); break;
-            case "list.updated": onListUpdated?.(msg.data); break;
-            case "list.deleted": onListDeleted?.(msg.data.list_id); break;
-            case "list.moved":   onListMoved?.(msg.data); break;
+            case "card_created": onCardCreated?.(msg.data); break;
+            case "card_updated": onCardUpdated?.(msg.data); break;
+            case "card_deleted": onCardDeleted?.(msg.data.card_id); break;
+            case "card_moved":   onCardMoved?.(msg.data); break;
+            case "list_created": onListCreated?.(msg.data); break;
+            case "list_updated": onListUpdated?.(msg.data); break;
+            case "list_deleted": onListDeleted?.(msg.data.list_id); break;
+            case "list_moved":   onListMoved?.(msg.data); break;
           }
         } catch {
           // ignore malformed messages

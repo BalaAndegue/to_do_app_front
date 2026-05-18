@@ -217,7 +217,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       });
     },
     onCardMoved: (card) => {
-      if (card.list) fetchCardsForList(card.list);
+      if (!card.list) return;
+      // Remove the card from whichever list currently holds it, then re-fetch
+      // the destination (and former source if different) to get correct positions.
+      setCardsByList(prev => {
+        const next = { ...prev };
+        for (const key of Object.keys(next)) {
+          const lid = Number(key);
+          if (lid !== card.list && next[lid].some(c => c.card_id === card.card_id)) {
+            next[lid] = next[lid].filter(c => c.card_id !== card.card_id);
+            fetchCardsForList(lid); // sync positions of the old list
+          }
+        }
+        return next;
+      });
+      fetchCardsForList(card.list);
     },
     onListCreated: () => { fetchedListIds.current = new Set(); fetchLists(); },
     onListUpdated: () => fetchLists(),
@@ -331,6 +345,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         position: destIndex,
         list_id: destListId !== sourceListId ? destListId : undefined,
       });
+      // Backend atomically shifts all positions — sync local state
+      fetchCardsForList(sourceListId);
+      if (destListId !== sourceListId) fetchCardsForList(destListId);
     } catch {
       fetchCardsForList(sourceListId);
       if (destListId !== sourceListId) fetchCardsForList(destListId);
