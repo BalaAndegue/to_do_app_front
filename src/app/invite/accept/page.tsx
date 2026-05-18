@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Link2, Lock, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
@@ -11,6 +11,14 @@ import { useAuth } from "@/components/AuthContext";
 type State = "idle" | "loading" | "success" | "error" | "no-token" | "unauthenticated";
 
 export default function AcceptInvitePage() {
+  return (
+    <Suspense>
+      <AcceptInviteContent />
+    </Suspense>
+  );
+}
+
+function AcceptInviteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, loading: authLoading } = useAuth();

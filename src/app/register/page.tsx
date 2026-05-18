@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { RegisterService } from "@/lib";
 import { useRouter } from "next/navigation";
-import { normalizeApiError } from "@/lib/api/client";
+import { normalizeApiError, extractFieldErrors } from "@/lib/api/client";
 import { uiImages } from "@/lib/ui-images";
 
 export default function Register() {
@@ -11,13 +11,15 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setFieldErrors({});
 
     try {
       await RegisterService.registerCreate({
@@ -26,8 +28,9 @@ export default function Register() {
         password
       });
       router.push("/login");
-    } catch (error: unknown) {
-      setError(normalizeApiError(error));
+    } catch (err: unknown) {
+      setError(normalizeApiError(err));
+      setFieldErrors(extractFieldErrors(err));
     } finally {
       setLoading(false);
     }
@@ -53,6 +56,9 @@ export default function Register() {
                 className="rounded-xl border-2 border-yellow-400 bg-white p-3 text-black transition-colors focus:border-yellow-500 focus:outline-none"
                 required
               />
+              {fieldErrors.username?.map((msg, i) => (
+                <p key={i} className="text-xs text-red-500">{msg}</p>
+              ))}
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-black">Email</label>
@@ -64,6 +70,9 @@ export default function Register() {
                 className="rounded-xl border-2 border-yellow-400 bg-white p-3 text-black transition-colors focus:border-yellow-500 focus:outline-none"
                 required
               />
+              {fieldErrors.email?.map((msg, i) => (
+                <p key={i} className="text-xs text-red-500">{msg}</p>
+              ))}
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-black">Mot de passe</label>
@@ -75,6 +84,9 @@ export default function Register() {
                 className="rounded-xl border-2 border-yellow-400 bg-white p-3 text-black transition-colors focus:border-yellow-500 focus:outline-none"
                 required
               />
+              {fieldErrors.password?.map((msg, i) => (
+                <p key={i} className="text-xs text-red-500">{msg}</p>
+              ))}
             </div>
             {error && <div className="border-l-4 border-red-600 bg-red-50 p-2 text-sm font-medium text-red-600">{error}</div>}
             <button
