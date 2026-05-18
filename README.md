@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## To Do App Front
 
-## Getting Started
+Frontend Next.js d'une application de gestion de tableaux inspirée de Trello.
 
-First, run the development server:
+## Configuration
+
+1. Copier le fichier d'environnement :
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Vérifier que l'URL API pointe vers ton backend Swagger :
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Installer les dépendances puis lancer le projet :
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Intégration backend (Swagger)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Le client OpenAPI est configuré dans `src/lib/api/client.ts`.
+- Le token est envoyé au format `Authorization: Token <token>` (conforme à `swagger.json`).
+- L'authentification est centralisée via `src/components/AuthContext.tsx`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Parcours principal
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app/login/page.tsx` : connexion et stockage du token
+- `src/app/page.tsx` : affichage et création de boards
+- `src/app/board/[id]/page.tsx` : affichage et création de listes
+- `src/components/ui/ListColumn.tsx` : affichage et création de cartes
