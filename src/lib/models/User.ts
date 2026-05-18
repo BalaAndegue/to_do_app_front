@@ -10,6 +10,7 @@ export type User = {
     last_name?: string;
     bio?: string | null;
     avatar_url?: string | null;
+    readonly created_at?: string;
     password: string;
 };
 

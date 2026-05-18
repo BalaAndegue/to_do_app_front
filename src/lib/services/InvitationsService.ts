@@ -1,118 +1,45 @@
-/* generated using openapi-typescript-codegen -- do not edit */
-/* istanbul ignore file */
-/* tslint:disable */
-/* eslint-disable */
 import type { BoardInvitation } from '../models/BoardInvitation';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+
+export type PaginatedInvitations = { count: number; next: string | null; previous: string | null; results: BoardInvitation[] };
+
 export class InvitationsService {
-    /**
-     * @returns BoardInvitation
-     * @throws ApiError
-     */
-    public static invitationsList(): CancelablePromise<Array<BoardInvitation>> {
+    public static invitationsList(params?: { page?: number }): CancelablePromise<PaginatedInvitations> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/invitations/',
+            query: params,
         });
     }
-    /**
-     * @param data
-     * @returns BoardInvitation
-     * @throws ApiError
-     */
-    public static invitationsCreate(
-        data: BoardInvitation,
-    ): CancelablePromise<BoardInvitation> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/invitations/',
-            body: data,
-        });
-    }
-    /**
-     * @param data
-     * @returns BoardInvitation
-     * @throws ApiError
-     */
-    public static invitationsAccept(
-        data: BoardInvitation,
-    ): CancelablePromise<BoardInvitation> {
+
+    public static invitationsAccept(data: { token: string }): CancelablePromise<{
+        success: boolean;
+        message: string;
+        board_id: number;
+        board_name: string;
+    }> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/invitations/accept/',
             body: data,
         });
     }
-    /**
-     * @param id A unique integer value identifying this board invitation.
-     * @returns BoardInvitation
-     * @throws ApiError
-     */
-    public static invitationsRead(
-        id: number,
-    ): CancelablePromise<BoardInvitation> {
+
+    public static invitationsRead(id: number): CancelablePromise<BoardInvitation> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/invitations/{id}/',
-            path: {
-                'id': id,
-            },
+            path: { id },
         });
     }
-    /**
-     * @param id A unique integer value identifying this board invitation.
-     * @param data
-     * @returns BoardInvitation
-     * @throws ApiError
-     */
-    public static invitationsUpdate(
-        id: number,
-        data: BoardInvitation,
-    ): CancelablePromise<BoardInvitation> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/invitations/{id}/',
-            path: {
-                'id': id,
-            },
-            body: data,
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this board invitation.
-     * @param data
-     * @returns BoardInvitation
-     * @throws ApiError
-     */
-    public static invitationsPartialUpdate(
-        id: number,
-        data: BoardInvitation,
-    ): CancelablePromise<BoardInvitation> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/invitations/{id}/',
-            path: {
-                'id': id,
-            },
-            body: data,
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this board invitation.
-     * @returns void
-     * @throws ApiError
-     */
-    public static invitationsDelete(
-        id: number,
-    ): CancelablePromise<void> {
+
+    public static invitationsDelete(id: number): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
             url: '/invitations/{id}/',
-            path: {
-                'id': id,
-            },
+            path: { id },
         });
     }
 }

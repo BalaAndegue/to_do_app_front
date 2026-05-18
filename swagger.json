@@ -1,9 +1,24 @@
 swagger: '2.0'
 info:
-  title: TO Do App API
-  description: Documentation de l'API
+  title: Collaborative Workspace API
+  description: |-
+    REST API for a Trello-like collaborative workspace.
+
+    **Authentication** — All endpoints (except `/register/` and `/login/`) require a token:
+    ```
+    Authorization: Token <your_token>
+    ```
+
+    **Key resources:** Boards → Lists → Cards → Checklists / Labels / Comments / Attachments
+
+    **Roles:** Each board has members with roles `admin`, `member`, or `observer`.
+  termsOfService: https://www.example.com/terms/
+  contact:
+    email: contact@example.com
+  license:
+    name: MIT License
   version: v1
-host: 127.0.0.1:8000
+host: localhost:8000
 schemes:
 - http
 basePath: /api
@@ -23,37 +38,57 @@ paths:
   /activities/:
     get:
       operationId: activities_list
-      description: ''
-      parameters: []
+      summary: Fil d'activité
+      description: |-
+        Retourne le journal des actions sur les tableaux accessibles, trié du plus récent au plus ancien. Les activités sont créées **automatiquement** par les signaux Django — cet endpoint est en **lecture seule**.
+
+        **Types d'action :** `create_board`, `join_board`, `leave_board`, `add_comment`, `delete_comment`, `check_item`, `uncheck_item`.
+
+        Filtres : **?board=<id>** ou **?card=<id>**.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: board
+        in: query
+        description: Filtrer par tableau (board_id).
+        type: integer
+      - name: card
+        in: query
+        description: Filtrer par carte (card_id).
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/Activity'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/Activity'
       tags:
-      - activities
-    post:
-      operationId: activities_create
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/Activity'
-      responses:
-        '201':
-          description: ''
-          schema:
-            $ref: '#/definitions/Activity'
-      tags:
-      - activities
+      - Activity
     parameters: []
   /activities/{activity_id}/:
     get:
       operationId: activities_read
+      summary: Détail d'une entrée d'activité
       description: ''
       parameters: []
       responses:
@@ -62,71 +97,58 @@ paths:
           schema:
             $ref: '#/definitions/Activity'
       tags:
-      - activities
-    put:
-      operationId: activities_update
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/Activity'
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/Activity'
-      tags:
-      - activities
-    patch:
-      operationId: activities_partial_update
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/Activity'
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/Activity'
-      tags:
-      - activities
-    delete:
-      operationId: activities_delete
-      description: ''
-      parameters: []
-      responses:
-        '204':
-          description: ''
-      tags:
-      - activities
+      - Activity
     parameters:
     - name: activity_id
       in: path
-      description: A unique integer value identifying this activity.
       required: true
-      type: integer
+      type: string
   /attachments/:
     get:
       operationId: attachments_list
-      description: ''
-      parameters: []
+      summary: Lister les pièces jointes
+      description: Retourne les pièces jointes des cartes accessibles. Utiliser **?card=<id>**.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: card
+        in: query
+        description: Filtrer par carte (card_id).
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/Attachment'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/Attachment'
       tags:
-      - attachments
+      - Attachments
     post:
       operationId: attachments_create
-      description: ''
+      summary: Enregistrer une pièce jointe
+      description: 'Enregistre les métadonnées d''un fichier déjà hébergé (S3, Cloudinary…).
+        Le champ **uploaded_by** est automatiquement défini sur l''utilisateur connecté.
+        Fournir : **card**, **filename**, **url**, **mime_type**, **size** (en octets).'
       parameters:
       - name: data
         in: body
@@ -139,11 +161,12 @@ paths:
           schema:
             $ref: '#/definitions/Attachment'
       tags:
-      - attachments
+      - Attachments
     parameters: []
   /attachments/{attach_id}/:
     get:
       operationId: attachments_read
+      summary: Détail d'une pièce jointe
       description: ''
       parameters: []
       responses:
@@ -152,9 +175,10 @@ paths:
           schema:
             $ref: '#/definitions/Attachment'
       tags:
-      - attachments
+      - Attachments
     put:
       operationId: attachments_update
+      summary: Remplacer les métadonnées d'une pièce jointe
       description: ''
       parameters:
       - name: data
@@ -168,9 +192,10 @@ paths:
           schema:
             $ref: '#/definitions/Attachment'
       tags:
-      - attachments
+      - Attachments
     patch:
       operationId: attachments_partial_update
+      summary: Modifier partiellement les métadonnées d'une pièce jointe
       description: ''
       parameters:
       - name: data
@@ -184,39 +209,64 @@ paths:
           schema:
             $ref: '#/definitions/Attachment'
       tags:
-      - attachments
+      - Attachments
     delete:
       operationId: attachments_delete
-      description: ''
+      summary: Supprimer une pièce jointe
+      description: Réservé au déposant ou à un admin du tableau.
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - attachments
+      - Attachments
     parameters:
     - name: attach_id
       in: path
-      description: A unique integer value identifying this attachment.
       required: true
-      type: integer
+      type: string
   /board-members/:
     get:
       operationId: board-members_list
-      description: ''
-      parameters: []
+      summary: Lister les membres des tableaux
+      description: Retourne tous les membres des tableaux auxquels l'utilisateur appartient.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/BoardMember'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/BoardMember'
       tags:
-      - board-members
+      - Board Members
     post:
       operationId: board-members_create
-      description: ''
+      summary: Ajouter un membre directement
+      description: Ajoute un utilisateur comme membre d'un tableau sans passer par
+        une invitation. Requiert le rôle **admin**. Préférer **POST /boards/{id}/invite/**
+        pour envoyer un email.
       parameters:
       - name: data
         in: body
@@ -229,11 +279,12 @@ paths:
           schema:
             $ref: '#/definitions/BoardMember'
       tags:
-      - board-members
+      - Board Members
     parameters: []
   /board-members/{id}/:
     get:
       operationId: board-members_read
+      summary: Détail d'un membre
       description: ''
       parameters: []
       responses:
@@ -242,10 +293,11 @@ paths:
           schema:
             $ref: '#/definitions/BoardMember'
       tags:
-      - board-members
+      - Board Members
     put:
       operationId: board-members_update
-      description: ''
+      summary: Remplacer le rôle d'un membre (remplacement complet)
+      description: Requiert le rôle **admin** sur le tableau.
       parameters:
       - name: data
         in: body
@@ -258,10 +310,12 @@ paths:
           schema:
             $ref: '#/definitions/BoardMember'
       tags:
-      - board-members
+      - Board Members
     patch:
       operationId: board-members_partial_update
-      description: ''
+      summary: Changer le rôle d'un membre
+      description: Change le rôle d'un membre (`admin`, `member`, `observer`). Requiert
+        le rôle **admin** sur le tableau.
       parameters:
       - name: data
         in: body
@@ -274,16 +328,17 @@ paths:
           schema:
             $ref: '#/definitions/BoardMember'
       tags:
-      - board-members
+      - Board Members
     delete:
       operationId: board-members_delete
-      description: ''
+      summary: Retirer un membre du tableau
+      description: Requiert le rôle **admin** sur le tableau.
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - board-members
+      - Board Members
     parameters:
     - name: id
       in: path
@@ -292,20 +347,57 @@ paths:
   /boards/:
     get:
       operationId: boards_list
-      description: ViewSet for viewing and editing boards.
-      parameters: []
+      summary: Lister les tableaux accessibles
+      description: Retourne tous les tableaux publics + les tableaux dont l'utilisateur
+        est membre ou créateur. Résultats paginés (20/page).
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: is_closed
+        in: query
+        description: Filtrer les tableaux archivés (true) ou actifs (false).
+        type: boolean
+      - name: visibility
+        in: query
+        description: Filtrer par visibilité.
+        type: string
+        enum:
+        - public
+        - private
+        - workspace
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/Board'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/BoardList'
       tags:
-      - boards
+      - Boards
     post:
       operationId: boards_create
-      description: ViewSet for viewing and editing boards.
+      summary: Créer un tableau
+      description: Crée un nouveau tableau. Le créateur est automatiquement ajouté
+        comme membre avec le rôle **admin**.
       parameters:
       - name: data
         in: body
@@ -318,12 +410,14 @@ paths:
           schema:
             $ref: '#/definitions/Board'
       tags:
-      - boards
+      - Boards
     parameters: []
-  /boards/{id}/:
+  /boards/{board_id}/:
     get:
       operationId: boards_read
-      description: ViewSet for viewing and editing boards.
+      summary: Détail d'un tableau
+      description: Retourne le tableau avec ses listes (résumé) et la liste de ses
+        membres.
       parameters: []
       responses:
         '200':
@@ -331,10 +425,11 @@ paths:
           schema:
             $ref: '#/definitions/Board'
       tags:
-      - boards
+      - Boards
     put:
       operationId: boards_update
-      description: ViewSet for viewing and editing boards.
+      summary: Mettre à jour un tableau (remplacement complet)
+      description: ''
       parameters:
       - name: data
         in: body
@@ -347,10 +442,11 @@ paths:
           schema:
             $ref: '#/definitions/Board'
       tags:
-      - boards
+      - Boards
     patch:
       operationId: boards_partial_update
-      description: ViewSet for viewing and editing boards.
+      summary: Mettre à jour un tableau (partiel)
+      description: Met à jour un ou plusieurs champs du tableau.
       parameters:
       - name: data
         in: body
@@ -363,25 +459,53 @@ paths:
           schema:
             $ref: '#/definitions/Board'
       tags:
-      - boards
+      - Boards
     delete:
       operationId: boards_delete
-      description: ViewSet for viewing and editing boards.
+      summary: Supprimer un tableau
+      description: Supprime définitivement le tableau et tout son contenu (listes,
+        cartes, etc.).
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - boards
+      - Boards
     parameters:
-    - name: id
+    - name: board_id
       in: path
       required: true
       type: string
-  /boards/{id}/invite/:
+  /boards/{board_id}/close/:
+    post:
+      operationId: boards_close
+      summary: Archiver (fermer) un tableau
+      description: Marque le tableau comme fermé. Requiert le rôle **admin**.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          type: object
+          properties: {}
+      responses:
+        '200':
+          description: Tableau archivé.
+        '403':
+          description: Permission refusée.
+      tags:
+      - Boards
+    parameters:
+    - name: board_id
+      in: path
+      required: true
+      type: string
+  /boards/{board_id}/invite/:
     post:
       operationId: boards_invite
-      description: Invite a user to the board by email.
+      summary: Inviter un utilisateur par email
+      description: Crée une invitation avec un token UUID unique et envoie un email
+        à l'adresse indiquée. Requiert le rôle **admin** sur le tableau.
       parameters:
       - name: data
         in: body
@@ -392,26 +516,36 @@ paths:
           type: object
           properties:
             email:
-              description: Email of the user to invite
+              description: Email de l'utilisateur à inviter.
               type: string
+              format: email
+            role:
+              description: Rôle attribué à l'invité.
+              type: string
+              enum:
+              - member
+              - observer
+              default: member
       responses:
         '201':
           description: ''
           schema:
             $ref: '#/definitions/BoardInvitation'
         '400':
-          description: Bad Request
+          description: Email manquant, utilisateur déjà membre, ou invitation déjà
+            en attente.
       tags:
-      - boards
+      - Boards
     parameters:
-    - name: id
+    - name: board_id
       in: path
       required: true
       type: string
-  /boards/{id}/members/:
+  /boards/{board_id}/members/:
     get:
       operationId: boards_members
-      description: Get all members of the board.
+      summary: Lister les membres du tableau
+      description: Retourne tous les membres avec leur rôle et la date d'adhésion.
       parameters: []
       responses:
         '200':
@@ -421,29 +555,82 @@ paths:
             items:
               $ref: '#/definitions/BoardMember'
       tags:
-      - boards
+      - Boards
     parameters:
-    - name: id
+    - name: board_id
+      in: path
+      required: true
+      type: string
+  /boards/{board_id}/reopen/:
+    post:
+      operationId: boards_reopen
+      summary: Réouvrir un tableau archivé
+      description: Restaure un tableau fermé. Requiert le rôle **admin**.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          type: object
+          properties: {}
+      responses:
+        '200':
+          description: Tableau réouvert.
+        '403':
+          description: Permission refusée.
+      tags:
+      - Boards
+    parameters:
+    - name: board_id
       in: path
       required: true
       type: string
   /card-labels/:
     get:
       operationId: card-labels_list
-      description: ''
-      parameters: []
+      summary: Lister les associations carte-label
+      description: Retourne les labels appliqués aux cartes accessibles. Utiliser
+        **?card=<id>**.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: card
+        in: query
+        description: Filtrer par carte (card_id).
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/CardLabel'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/CardLabel'
       tags:
-      - card-labels
+      - Card Labels
     post:
       operationId: card-labels_create
-      description: ''
+      summary: Appliquer un label à une carte
+      description: Associe un label existant à une carte. Le label doit appartenir
+        au même tableau que la carte.
       parameters:
       - name: data
         in: body
@@ -456,11 +643,12 @@ paths:
           schema:
             $ref: '#/definitions/CardLabel'
       tags:
-      - card-labels
+      - Card Labels
     parameters: []
   /card-labels/{id}/:
     get:
       operationId: card-labels_read
+      summary: Détail d'une association carte-label
       description: ''
       parameters: []
       responses:
@@ -469,9 +657,10 @@ paths:
           schema:
             $ref: '#/definitions/CardLabel'
       tags:
-      - card-labels
+      - Card Labels
     put:
       operationId: card-labels_update
+      summary: Remplacer une association carte-label
       description: ''
       parameters:
       - name: data
@@ -485,9 +674,10 @@ paths:
           schema:
             $ref: '#/definitions/CardLabel'
       tags:
-      - card-labels
+      - Card Labels
     patch:
       operationId: card-labels_partial_update
+      summary: Modifier partiellement une association carte-label
       description: ''
       parameters:
       - name: data
@@ -501,205 +691,310 @@ paths:
           schema:
             $ref: '#/definitions/CardLabel'
       tags:
-      - card-labels
+      - Card Labels
     delete:
       operationId: card-labels_delete
-      description: ''
+      summary: Retirer un label d'une carte
+      description: Supprime l'association. Le label du tableau n'est pas supprimé.
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - card-labels
-    parameters:
-    - name: id
-      in: path
-      description: A unique integer value identifying this card label.
-      required: true
-      type: integer
-  /card-members/:
-    get:
-      operationId: card-members_list
-      description: ''
-      parameters: []
-      responses:
-        '200':
-          description: ''
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/CardMember'
-      tags:
-      - card-members
-    post:
-      operationId: card-members_create
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/CardMember'
-      responses:
-        '201':
-          description: ''
-          schema:
-            $ref: '#/definitions/CardMember'
-      tags:
-      - card-members
-    parameters: []
-  /card-members/{id}/:
-    get:
-      operationId: card-members_read
-      description: ''
-      parameters: []
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/CardMember'
-      tags:
-      - card-members
-    put:
-      operationId: card-members_update
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/CardMember'
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/CardMember'
-      tags:
-      - card-members
-    patch:
-      operationId: card-members_partial_update
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/CardMember'
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/CardMember'
-      tags:
-      - card-members
-    delete:
-      operationId: card-members_delete
-      description: ''
-      parameters: []
-      responses:
-        '204':
-          description: ''
-      tags:
-      - card-members
-    parameters:
-    - name: id
-      in: path
-      description: A unique integer value identifying this card member.
-      required: true
-      type: integer
-  /cards/:
-    get:
-      operationId: cards_list
-      description: ViewSet for viewing and editing cards.
-      parameters: []
-      responses:
-        '200':
-          description: ''
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Card'
-      tags:
-      - cards
-    post:
-      operationId: cards_create
-      description: ViewSet for viewing and editing cards.
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/Card'
-      responses:
-        '201':
-          description: ''
-          schema:
-            $ref: '#/definitions/Card'
-      tags:
-      - cards
-    parameters: []
-  /cards/{id}/:
-    get:
-      operationId: cards_read
-      description: ViewSet for viewing and editing cards.
-      parameters: []
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/Card'
-      tags:
-      - cards
-    put:
-      operationId: cards_update
-      description: ViewSet for viewing and editing cards.
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/Card'
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/Card'
-      tags:
-      - cards
-    patch:
-      operationId: cards_partial_update
-      description: ViewSet for viewing and editing cards.
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/Card'
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/Card'
-      tags:
-      - cards
-    delete:
-      operationId: cards_delete
-      description: ViewSet for viewing and editing cards.
-      parameters: []
-      responses:
-        '204':
-          description: ''
-      tags:
-      - cards
+      - Card Labels
     parameters:
     - name: id
       in: path
       required: true
       type: string
-  /cards/{id}/move/:
+  /card-members/:
+    get:
+      operationId: card-members_list
+      summary: Lister les membres assignés aux cartes
+      description: Retourne les assignations des cartes accessibles. Utiliser **?card=<id>**.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: card
+        in: query
+        description: Filtrer par carte (card_id).
+        type: integer
+      responses:
+        '200':
+          description: ''
+          schema:
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/CardMember'
+      tags:
+      - Card Members
+    post:
+      operationId: card-members_create
+      summary: Assigner un membre à une carte
+      description: Assigne un utilisateur à une carte. L'utilisateur doit être membre
+        du tableau contenant la carte.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CardMember'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardMember'
+      tags:
+      - Card Members
+    parameters: []
+  /card-members/{id}/:
+    get:
+      operationId: card-members_read
+      summary: Détail d'une assignation
+      description: ''
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardMember'
+      tags:
+      - Card Members
+    put:
+      operationId: card-members_update
+      summary: Remplacer une assignation
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CardMember'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardMember'
+      tags:
+      - Card Members
+    patch:
+      operationId: card-members_partial_update
+      summary: Modifier partiellement une assignation
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CardMember'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CardMember'
+      tags:
+      - Card Members
+    delete:
+      operationId: card-members_delete
+      summary: Retirer un membre d'une carte
+      description: Désassigne l'utilisateur de la carte. L'utilisateur reste membre
+        du tableau.
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - Card Members
+    parameters:
+    - name: id
+      in: path
+      required: true
+      type: string
+  /cards/:
+    get:
+      operationId: cards_list
+      summary: Lister les cartes accessibles
+      description: 'Retourne les cartes des tableaux accessibles. Filtres disponibles
+        : **?list**, **?board**, **?archived**, **?search**.'
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: list
+        in: query
+        description: Filtrer par liste (list_id).
+        type: integer
+      - name: board
+        in: query
+        description: Filtrer par tableau (board_id).
+        type: integer
+      - name: archived
+        in: query
+        description: true = cartes archivées, false = actives.
+        type: boolean
+      - name: search
+        in: query
+        description: Recherche plein-texte sur le titre et la description.
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/Card'
+      tags:
+      - Cards
+    post:
+      operationId: cards_create
+      summary: Créer une carte
+      description: Crée une carte dans une liste. Le champ **board** est déduit automatiquement
+        depuis la liste — inutile de le fournir.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Card'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/Card'
+      tags:
+      - Cards
+    parameters: []
+  /cards/{card_id}/:
+    get:
+      operationId: cards_read
+      summary: Détail complet d'une carte
+      description: 'Retourne la carte avec : labels, membres assignés, checklists
+        (avec items et progression), pièces jointes, et le nombre de commentaires.'
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Card'
+      tags:
+      - Cards
+    put:
+      operationId: cards_update
+      summary: Mettre à jour une carte (remplacement complet)
+      description: ''
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Card'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Card'
+      tags:
+      - Cards
+    patch:
+      operationId: cards_partial_update
+      summary: Modifier partiellement une carte
+      description: 'Met à jour un ou plusieurs champs : titre, description, due_date,
+        cover_image_url, etc.'
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Card'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Card'
+      tags:
+      - Cards
+    delete:
+      operationId: cards_delete
+      summary: Supprimer définitivement une carte
+      description: Supprime la carte et tout son contenu (checklists, commentaires,
+        pièces jointes).
+      parameters: []
+      responses:
+        '204':
+          description: ''
+      tags:
+      - Cards
+    parameters:
+    - name: card_id
+      in: path
+      required: true
+      type: string
+  /cards/{card_id}/archive/:
+    post:
+      operationId: cards_archive
+      summary: Archiver une carte (soft delete)
+      description: Masque la carte sans la supprimer. Récupérable via **unarchive**.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          type: object
+          properties: {}
+      responses:
+        '200':
+          description: Carte archivée.
+      tags:
+      - Cards
+    parameters:
+    - name: card_id
+      in: path
+      required: true
+      type: string
+  /cards/{card_id}/move/:
     post:
       operationId: cards_move
-      description: Move a card to a new position or list.
+      summary: Déplacer une carte
+      description: Change la position d'une carte dans sa liste ou la déplace dans
+        une autre liste du même tableau. Utiliser un **PATCH** standard pour modifier
+        les champs de la carte.
       parameters:
       - name: data
         in: body
@@ -710,10 +1005,10 @@ paths:
           type: object
           properties:
             position:
-              description: New position of the card
+              description: Nouvelle position (index 0) dans la liste.
               type: integer
             list_id:
-              description: ID of the new list to move to (optional)
+              description: ID de la liste cible (optionnel, même tableau uniquement).
               type: integer
       responses:
         '200':
@@ -721,33 +1016,84 @@ paths:
           schema:
             $ref: '#/definitions/Card'
         '400':
-          description: Bad Request
+          description: Position manquante ou liste dans un autre tableau.
         '404':
-          description: List not found
+          description: Liste introuvable.
       tags:
-      - cards
+      - Cards
     parameters:
-    - name: id
+    - name: card_id
+      in: path
+      required: true
+      type: string
+  /cards/{card_id}/unarchive/:
+    post:
+      operationId: cards_unarchive
+      summary: Restaurer une carte archivée
+      description: Remet la carte dans sa liste d'origine.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          type: object
+          properties: {}
+      responses:
+        '200':
+          description: Carte restaurée.
+      tags:
+      - Cards
+    parameters:
+    - name: card_id
       in: path
       required: true
       type: string
   /checklist-items/:
     get:
       operationId: checklist-items_list
-      description: ''
-      parameters: []
+      summary: Lister les items de checklist
+      description: Retourne les items accessibles. Utiliser **?checklist=<id>** pour
+        filtrer.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: checklist
+        in: query
+        description: Filtrer par checklist (checklist_id).
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/ChecklistItem'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/ChecklistItem'
       tags:
-      - checklist-items
+      - Checklist Items
     post:
       operationId: checklist-items_create
-      description: ''
+      summary: Ajouter un item à une checklist
+      description: Crée un item (non coché par défaut). Requiert d'être membre du
+        tableau.
       parameters:
       - name: data
         in: body
@@ -760,11 +1106,12 @@ paths:
           schema:
             $ref: '#/definitions/ChecklistItem'
       tags:
-      - checklist-items
+      - Checklist Items
     parameters: []
   /checklist-items/{item_id}/:
     get:
       operationId: checklist-items_read
+      summary: Détail d'un item de checklist
       description: ''
       parameters: []
       responses:
@@ -773,9 +1120,10 @@ paths:
           schema:
             $ref: '#/definitions/ChecklistItem'
       tags:
-      - checklist-items
+      - Checklist Items
     put:
       operationId: checklist-items_update
+      summary: Mettre à jour un item (remplacement complet)
       description: ''
       parameters:
       - name: data
@@ -789,10 +1137,12 @@ paths:
           schema:
             $ref: '#/definitions/ChecklistItem'
       tags:
-      - checklist-items
+      - Checklist Items
     patch:
       operationId: checklist-items_partial_update
-      description: ''
+      summary: Cocher/décocher ou renommer un item
+      description: 'Exemple pour cocher : `{"checked": true}`. Le signal Django crée
+        automatiquement une entrée dans le fil d''activité.'
       parameters:
       - name: data
         in: body
@@ -805,39 +1155,67 @@ paths:
           schema:
             $ref: '#/definitions/ChecklistItem'
       tags:
-      - checklist-items
+      - Checklist Items
     delete:
       operationId: checklist-items_delete
+      summary: Supprimer un item de checklist
       description: ''
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - checklist-items
+      - Checklist Items
     parameters:
     - name: item_id
       in: path
-      description: A unique integer value identifying this checklist item.
       required: true
-      type: integer
+      type: string
   /checklists/:
     get:
       operationId: checklists_list
-      description: ''
-      parameters: []
+      summary: Lister les checklists
+      description: Retourne les checklists des cartes accessibles. Chaque checklist
+        inclut **items_total** et **items_checked** pour afficher une barre de progression.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: card
+        in: query
+        description: Filtrer par carte (card_id).
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/Checklist'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/Checklist'
       tags:
-      - checklists
+      - Checklists
     post:
       operationId: checklists_create
-      description: ''
+      summary: Créer une checklist
+      description: Ajoute une checklist à une carte. Requiert d'être membre du tableau.
       parameters:
       - name: data
         in: body
@@ -850,12 +1228,13 @@ paths:
           schema:
             $ref: '#/definitions/Checklist'
       tags:
-      - checklists
+      - Checklists
     parameters: []
   /checklists/{checklist_id}/:
     get:
       operationId: checklists_read
-      description: ''
+      summary: Détail d'une checklist
+      description: Retourne la checklist avec tous ses items et les compteurs de progression.
       parameters: []
       responses:
         '200':
@@ -863,9 +1242,10 @@ paths:
           schema:
             $ref: '#/definitions/Checklist'
       tags:
-      - checklists
+      - Checklists
     put:
       operationId: checklists_update
+      summary: Mettre à jour une checklist (remplacement complet)
       description: ''
       parameters:
       - name: data
@@ -879,9 +1259,10 @@ paths:
           schema:
             $ref: '#/definitions/Checklist'
       tags:
-      - checklists
+      - Checklists
     patch:
       operationId: checklists_partial_update
+      summary: Renommer ou repositionner une checklist
       description: ''
       parameters:
       - name: data
@@ -895,39 +1276,67 @@ paths:
           schema:
             $ref: '#/definitions/Checklist'
       tags:
-      - checklists
+      - Checklists
     delete:
       operationId: checklists_delete
-      description: ''
+      summary: Supprimer une checklist
+      description: Supprime la checklist et tous ses items.
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - checklists
+      - Checklists
     parameters:
     - name: checklist_id
       in: path
-      description: A unique integer value identifying this checklist.
       required: true
-      type: integer
+      type: string
   /comments/:
     get:
       operationId: comments_list
-      description: ''
-      parameters: []
+      summary: Lister les commentaires
+      description: Retourne les commentaires des cartes accessibles. Utiliser **?card=<id>**.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: card
+        in: query
+        description: Filtrer par carte (card_id).
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/Comment'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/Comment'
       tags:
-      - comments
+      - Comments
     post:
       operationId: comments_create
-      description: ''
+      summary: Ajouter un commentaire
+      description: Poste un commentaire sur une carte. L'auteur est automatiquement
+        défini sur l'utilisateur connecté.
       parameters:
       - name: data
         in: body
@@ -940,12 +1349,14 @@ paths:
           schema:
             $ref: '#/definitions/Comment'
       tags:
-      - comments
+      - Comments
     parameters: []
-  /comments/{id}/:
+  /comments/{comment_id}/:
     get:
       operationId: comments_read
-      description: ''
+      summary: Détail d'un commentaire
+      description: Retourne le commentaire avec les infos de l'auteur et le champ
+        **is_edited**.
       parameters: []
       responses:
         '200':
@@ -953,10 +1364,11 @@ paths:
           schema:
             $ref: '#/definitions/Comment'
       tags:
-      - comments
+      - Comments
     put:
       operationId: comments_update
-      description: ''
+      summary: Modifier un commentaire (remplacement complet)
+      description: Réservé à l'auteur ou à un admin du tableau.
       parameters:
       - name: data
         in: body
@@ -969,10 +1381,11 @@ paths:
           schema:
             $ref: '#/definitions/Comment'
       tags:
-      - comments
+      - Comments
     patch:
       operationId: comments_partial_update
-      description: ''
+      summary: Modifier le contenu d'un commentaire
+      description: Réservé à l'auteur ou à un admin du tableau. Active le champ **is_edited**.
       parameters:
       - name: data
         in: body
@@ -985,73 +1398,101 @@ paths:
           schema:
             $ref: '#/definitions/Comment'
       tags:
-      - comments
+      - Comments
     delete:
       operationId: comments_delete
-      description: ''
+      summary: Supprimer un commentaire
+      description: Réservé à l'auteur ou à un admin du tableau.
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - comments
+      - Comments
     parameters:
-    - name: id
+    - name: comment_id
       in: path
       required: true
       type: string
   /invitations/:
     get:
       operationId: invitations_list
-      description: ''
-      parameters: []
+      summary: Lister les invitations en attente
+      description: Retourne les invitations des tableaux que vous administrez. Pour
+        inviter quelqu'un, utiliser **POST /boards/{id}/invite/**.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/BoardInvitation'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/BoardInvitation'
       tags:
-      - invitations
-    post:
-      operationId: invitations_create
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/BoardInvitation'
-      responses:
-        '201':
-          description: ''
-          schema:
-            $ref: '#/definitions/BoardInvitation'
-      tags:
-      - invitations
+      - Invitations
     parameters: []
   /invitations/accept/:
     post:
       operationId: invitations_accept
-      description: ''
+      summary: Accepter une invitation
+      description: |-
+        Valide le token UUID reçu par email et ajoute l'utilisateur connecté comme **member** du tableau correspondant.
+
+        L'opération est atomique : si l'utilisateur est déjà membre, l'invitation est quand même marquée comme acceptée.
       parameters:
       - name: data
         in: body
         required: true
         schema:
-          $ref: '#/definitions/BoardInvitation'
+          required:
+          - token
+          type: object
+          properties:
+            token:
+              description: Token UUID reçu dans l'email d'invitation.
+              type: string
+              format: uuid
       responses:
-        '201':
-          description: ''
-          schema:
-            $ref: '#/definitions/BoardInvitation'
+        '200':
+          description: Invitation acceptée — utilisateur ajouté au tableau.
+          examples:
+            application/json:
+              success: true
+              message: Invitation acceptée. Bienvenue dans le tableau !
+              board_id: 1
+              board_name: Mon tableau
+        '400':
+          description: Token manquant.
+        '404':
+          description: Token invalide ou invitation déjà utilisée.
       tags:
-      - invitations
+      - Invitations
     parameters: []
   /invitations/{id}/:
     get:
       operationId: invitations_read
+      summary: Détail d'une invitation
       description: ''
       parameters: []
       responses:
@@ -1060,71 +1501,68 @@ paths:
           schema:
             $ref: '#/definitions/BoardInvitation'
       tags:
-      - invitations
-    put:
-      operationId: invitations_update
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/BoardInvitation'
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/BoardInvitation'
-      tags:
-      - invitations
-    patch:
-      operationId: invitations_partial_update
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/BoardInvitation'
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/BoardInvitation'
-      tags:
-      - invitations
+      - Invitations
     delete:
       operationId: invitations_delete
-      description: ''
+      summary: Annuler une invitation
+      description: Supprime l'invitation. L'email invité ne pourra plus accepter le
+        token.
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - invitations
+      - Invitations
     parameters:
     - name: id
       in: path
-      description: A unique integer value identifying this board invitation.
       required: true
-      type: integer
+      type: string
   /labels/:
     get:
       operationId: labels_list
-      description: ''
-      parameters: []
+      summary: Lister les labels accessibles
+      description: Retourne les labels des tableaux accessibles. Utiliser **?board=<id>**
+        pour filtrer.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: board
+        in: query
+        description: Filtrer par tableau (board_id).
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/Label'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/Label'
       tags:
-      - labels
+      - Labels
     post:
       operationId: labels_create
-      description: ''
+      summary: Créer un label
+      description: Crée un label coloré pour un tableau. Requiert le rôle **admin**.
       parameters:
       - name: data
         in: body
@@ -1137,11 +1575,12 @@ paths:
           schema:
             $ref: '#/definitions/Label'
       tags:
-      - labels
+      - Labels
     parameters: []
   /labels/{label_id}/:
     get:
       operationId: labels_read
+      summary: Détail d'un label
       description: ''
       parameters: []
       responses:
@@ -1150,10 +1589,11 @@ paths:
           schema:
             $ref: '#/definitions/Label'
       tags:
-      - labels
+      - Labels
     put:
       operationId: labels_update
-      description: ''
+      summary: Mettre à jour un label (remplacement complet)
+      description: Requiert le rôle **admin** sur le tableau.
       parameters:
       - name: data
         in: body
@@ -1166,10 +1606,11 @@ paths:
           schema:
             $ref: '#/definitions/Label'
       tags:
-      - labels
+      - Labels
     patch:
       operationId: labels_partial_update
-      description: ''
+      summary: Modifier le nom ou la couleur d'un label
+      description: Requiert le rôle **admin** sur le tableau.
       parameters:
       - name: data
         in: body
@@ -1182,39 +1623,72 @@ paths:
           schema:
             $ref: '#/definitions/Label'
       tags:
-      - labels
+      - Labels
     delete:
       operationId: labels_delete
-      description: ''
+      summary: Supprimer un label
+      description: Supprime le label et le retire automatiquement des cartes associées.
+        Requiert **admin**.
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - labels
+      - Labels
     parameters:
     - name: label_id
       in: path
-      description: A unique integer value identifying this label.
       required: true
-      type: integer
+      type: string
   /lists/:
     get:
       operationId: lists_list
-      description: ''
-      parameters: []
+      summary: Lister les listes accessibles
+      description: Retourne les listes des tableaux accessibles. Utiliser **?board=<id>**
+        pour filtrer.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      - name: board
+        in: query
+        description: Filtrer par tableau (board_id).
+        type: integer
+      - name: archived
+        in: query
+        description: true = listes archivées, false = actives.
+        type: boolean
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/List'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/List'
       tags:
-      - lists
+      - Lists
     post:
       operationId: lists_create
-      description: ''
+      summary: Créer une liste
+      description: Crée une colonne dans un tableau. Requiert d'être membre du tableau.
       parameters:
       - name: data
         in: body
@@ -1227,12 +1701,14 @@ paths:
           schema:
             $ref: '#/definitions/List'
       tags:
-      - lists
+      - Lists
     parameters: []
-  /lists/{id}/:
+  /lists/{list_id}/:
     get:
       operationId: lists_read
-      description: ''
+      summary: Détail d'une liste
+      description: 'Retourne la liste avec ses cartes (données légères : titre, position,
+        labels, membres).'
       parameters: []
       responses:
         '200':
@@ -1240,9 +1716,10 @@ paths:
           schema:
             $ref: '#/definitions/List'
       tags:
-      - lists
+      - Lists
     put:
       operationId: lists_update
+      summary: Mettre à jour une liste (remplacement complet)
       description: ''
       parameters:
       - name: data
@@ -1256,10 +1733,11 @@ paths:
           schema:
             $ref: '#/definitions/List'
       tags:
-      - lists
+      - Lists
     patch:
       operationId: lists_partial_update
-      description: ''
+      summary: Renommer ou repositionner une liste
+      description: 'Modification partielle : nom, position, archived.'
       parameters:
       - name: data
         in: body
@@ -1272,25 +1750,31 @@ paths:
           schema:
             $ref: '#/definitions/List'
       tags:
-      - lists
+      - Lists
     delete:
       operationId: lists_delete
-      description: ''
+      summary: Supprimer une liste
+      description: Supprime la liste et toutes ses cartes. Requiert le rôle **admin**.
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - lists
+      - Lists
     parameters:
-    - name: id
+    - name: list_id
       in: path
       required: true
       type: string
   /login/:
     post:
       operationId: login_create
-      description: API pour se connecter avec email et mot de passe.
+      summary: Se connecter
+      description: |-
+        Authentifie l'utilisateur avec **email** + **password** et retourne le token.
+
+        Inclure ce token dans toutes les requêtes suivantes :
+        `Authorization: Token <token>`
       parameters:
       - name: data
         in: body
@@ -1299,27 +1783,49 @@ paths:
           $ref: '#/definitions/Login'
       responses:
         '200':
-          description: Connexion réussie
+          description: Connexion réussie — token retourné.
+          examples:
+            application/json:
+              success: true
+              message: Connexion réussie.
+              data:
+                token: <token>
+                user: {}
         '400':
-          description: Échec de connexion
+          description: Email ou mot de passe invalide.
       tags:
-      - login
+      - Authentification
     parameters: []
   /logout/:
     post:
       operationId: logout_create
-      description: API pour se déconnecter (nécessite d'être authentifié).
-      parameters: []
+      summary: Se déconnecter
+      description: Invalide le token d'authentification courant. L'utilisateur doit
+        se reconnecter pour obtenir un nouveau token.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          type: object
+          properties: {}
       responses:
-        '201':
-          description: ''
+        '200':
+          description: Déconnexion réussie.
+        '400':
+          description: Aucun token actif.
       tags:
-      - logout
+      - Authentification
     parameters: []
   /register/:
     post:
       operationId: register_create
-      description: API pour enregistrer un nouvel utilisateur.
+      summary: Créer un compte utilisateur
+      description: |-
+        Enregistre un nouvel utilisateur et retourne immédiatement un token d'authentification.
+
+        Champs requis : **username**, **email**, **password**.
+        Champs optionnels : **first_name**, **last_name**, **bio**, **avatar_url**.
       parameters:
       - name: data
         in: body
@@ -1327,30 +1833,63 @@ paths:
         schema:
           $ref: '#/definitions/User'
       responses:
-        '200':
-          description: Utilisateur créé avec succès
+        '201':
+          description: Compte créé — token retourné.
+          examples:
+            application/json:
+              success: true
+              message: Compte créé avec succès.
+              data:
+                token: <token>
+                user: {}
         '400':
-          description: Erreur de validation
+          description: Erreur de validation (email ou username déjà utilisé, mot de
+            passe trop faible…)
       tags:
-      - register
+      - Authentification
     parameters: []
   /users/:
     get:
       operationId: users_list
-      description: ''
-      parameters: []
+      summary: Lister les utilisateurs
+      description: Retourne tous les utilisateurs enregistrés (données publiques uniquement).
+        Utile pour la recherche d'utilisateurs à inviter sur un tableau.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
       responses:
         '200':
           description: ''
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/User'
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/User'
       tags:
-      - users
+      - Utilisateurs
     post:
       operationId: users_create
-      description: ''
+      summary: Créer un utilisateur (admin)
+      description: Créer un compte via l'admin. Préférer **POST /register/** pour
+        l'inscription normale.
       parameters:
       - name: data
         in: body
@@ -1363,12 +1902,66 @@ paths:
           schema:
             $ref: '#/definitions/User'
       tags:
-      - users
+      - Utilisateurs
+    parameters: []
+  /users/change_password/:
+    post:
+      operationId: users_change_password
+      summary: Changer son mot de passe
+      description: Change le mot de passe de l'utilisateur connecté. Le token actuel
+        est invalidé et un nouveau token est retourné. Le frontend doit stocker le
+        nouveau token et l'utiliser pour les requêtes suivantes.
+      parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          required:
+          - new_password
+          type: object
+          properties:
+            new_password:
+              description: Nouveau mot de passe (soumis aux validateurs Django).
+              type: string
+      responses:
+        '200':
+          description: Mot de passe changé — nouveau token retourné.
+          examples:
+            application/json:
+              success: true
+              message: Mot de passe mis à jour. Reconnectez-vous avec votre nouveau
+                token.
+              data:
+                token: <new_token>
+        '400':
+          description: Mot de passe invalide ou non fourni.
+      tags:
+      - Utilisateurs
+    parameters: []
+  /users/me/:
+    get:
+      operationId: users_me
+      summary: Mon profil
+      description: Retourne le profil complet de l'utilisateur connecté.
+      parameters:
+      - name: page
+        in: query
+        description: A page number within the paginated result set.
+        required: false
+        type: integer
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/User'
+      tags:
+      - Utilisateurs
     parameters: []
   /users/{user_id}/:
     get:
       operationId: users_read
-      description: ''
+      summary: Profil d'un utilisateur
+      description: Retourne le profil public d'un utilisateur par son ID.
       parameters: []
       responses:
         '200':
@@ -1376,10 +1969,11 @@ paths:
           schema:
             $ref: '#/definitions/User'
       tags:
-      - users
+      - Utilisateurs
     put:
       operationId: users_update
-      description: ''
+      summary: Mettre à jour son profil (remplacement complet)
+      description: Réservé au propriétaire du compte.
       parameters:
       - name: data
         in: body
@@ -1392,10 +1986,12 @@ paths:
           schema:
             $ref: '#/definitions/User'
       tags:
-      - users
+      - Utilisateurs
     patch:
       operationId: users_partial_update
-      description: ''
+      summary: Modifier partiellement son profil
+      description: Met à jour un ou plusieurs champs du profil (bio, avatar_url, first_name…).
+        Réservé au propriétaire du compte.
       parameters:
       - name: data
         in: body
@@ -1408,51 +2004,24 @@ paths:
           schema:
             $ref: '#/definitions/User'
       tags:
-      - users
+      - Utilisateurs
     delete:
       operationId: users_delete
-      description: ''
+      summary: Supprimer son compte
+      description: Supprime définitivement le compte. Réservé au propriétaire.
       parameters: []
       responses:
         '204':
           description: ''
       tags:
-      - users
+      - Utilisateurs
     parameters:
     - name: user_id
       in: path
-      description: A unique integer value identifying this user.
       required: true
-      type: integer
-  /users/{user_id}/reset_password/:
-    post:
-      operationId: users_reset_password
-      description: ''
-      parameters:
-      - name: data
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/User'
-      responses:
-        '201':
-          description: ''
-          schema:
-            $ref: '#/definitions/User'
-      tags:
-      - users
-    parameters:
-    - name: user_id
-      in: path
-      description: A unique integer value identifying this user.
-      required: true
-      type: integer
+      type: string
 definitions:
-  User:
-    required:
-    - username
-    - email
-    - password
+  UserPublic:
     type: object
     properties:
       user_id:
@@ -1462,64 +2031,36 @@ definitions:
       username:
         title: Username
         type: string
-        maxLength: 50
-        minLength: 1
-      email:
-        title: Email
-        type: string
-        format: email
-        maxLength: 100
+        readOnly: true
         minLength: 1
       first_name:
         title: First name
         type: string
-        maxLength: 50
+        readOnly: true
+        minLength: 1
       last_name:
         title: Last name
         type: string
-        maxLength: 50
-      bio:
-        title: Bio
-        type: string
-        x-nullable: true
+        readOnly: true
+        minLength: 1
       avatar_url:
         title: Avatar url
         type: string
         format: uri
-        maxLength: 500
-        x-nullable: true
-      password:
-        title: Password
-        type: string
-        maxLength: 128
+        readOnly: true
         minLength: 1
+        x-nullable: true
   Activity:
     required:
-    - action_type
-    - content
     - board
     - user
+    - action_type
+    - content
     type: object
     properties:
       activity_id:
         title: Activity id
         type: integer
-        readOnly: true
-      user_details:
-        $ref: '#/definitions/User'
-      action_type:
-        title: Action type
-        type: string
-        maxLength: 50
-        minLength: 1
-      content:
-        title: Content
-        type: string
-        minLength: 1
-      created_at:
-        title: Created at
-        type: string
-        format: date-time
         readOnly: true
       board:
         title: Board
@@ -1535,6 +2076,22 @@ definitions:
       user:
         title: User
         type: integer
+      user_details:
+        $ref: '#/definitions/UserPublic'
+      action_type:
+        title: Action type
+        type: string
+        maxLength: 50
+        minLength: 1
+      content:
+        title: Content
+        type: string
+        minLength: 1
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
   Attachment:
     required:
     - card
@@ -1542,7 +2099,6 @@ definitions:
     - url
     - mime_type
     - size
-    - uploaded_by
     type: object
     properties:
       attach_id:
@@ -1575,8 +2131,9 @@ definitions:
       uploaded_by:
         title: Uploaded by
         type: integer
+        readOnly: true
       uploaded_by_details:
-        $ref: '#/definitions/User'
+        $ref: '#/definitions/UserPublic'
       uploaded_at:
         title: Uploaded at
         type: string
@@ -1599,7 +2156,7 @@ definitions:
         title: User
         type: integer
       user_details:
-        $ref: '#/definitions/User'
+        $ref: '#/definitions/UserPublic'
       role:
         title: Role
         type: string
@@ -1612,16 +2169,220 @@ definitions:
         type: string
         format: date-time
         readOnly: true
+  BoardList:
+    required:
+    - name
+    type: object
+    properties:
+      board_id:
+        title: Board id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 100
+        minLength: 1
+      description:
+        title: Description
+        type: string
+        x-nullable: true
+      visibility:
+        title: Visibility
+        type: string
+        enum:
+        - public
+        - private
+        - workspace
+      background_type:
+        title: Background type
+        type: string
+        maxLength: 20
+        minLength: 1
+      background_value:
+        title: Background value
+        type: string
+        maxLength: 500
+        minLength: 1
+      creator_details:
+        $ref: '#/definitions/UserPublic'
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      is_closed:
+        title: Is closed
+        type: boolean
+      members_count:
+        title: Members count
+        type: integer
+        readOnly: true
+      lists_count:
+        title: Lists count
+        type: integer
+        readOnly: true
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+  ListLight:
+    required:
+    - name
+    - position
+    type: object
+    properties:
+      list_id:
+        title: List id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 100
+        minLength: 1
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      archived:
+        title: Archived
+        type: boolean
+      cards_count:
+        title: Cards count
+        type: integer
+        readOnly: true
+  Board:
+    required:
+    - name
+    type: object
+    properties:
+      board_id:
+        title: Board id
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 100
+        minLength: 1
+      description:
+        title: Description
+        type: string
+        x-nullable: true
+      visibility:
+        title: Visibility
+        type: string
+        enum:
+        - public
+        - private
+        - workspace
+      background_type:
+        title: Background type
+        type: string
+        maxLength: 20
+        minLength: 1
+      background_value:
+        title: Background value
+        type: string
+        maxLength: 500
+        minLength: 1
+      creator:
+        title: Creator
+        type: integer
+        readOnly: true
+      creator_details:
+        $ref: '#/definitions/UserPublic'
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      is_closed:
+        title: Is closed
+        type: boolean
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      updated_at:
+        title: Updated at
+        type: string
+        format: date-time
+        readOnly: true
+      lists_count:
+        title: Lists count
+        type: integer
+        readOnly: true
+      lists:
+        type: array
+        items:
+          $ref: '#/definitions/ListLight'
+        readOnly: true
+      members:
+        type: array
+        items:
+          $ref: '#/definitions/BoardMember'
+        readOnly: true
+  BoardInvitation:
+    required:
+    - board
+    - email
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      board:
+        title: Board
+        type: integer
+      board_name:
+        title: Board name
+        type: string
+        readOnly: true
+        minLength: 1
+      inviter:
+        title: Inviter
+        type: integer
+        readOnly: true
+      inviter_details:
+        $ref: '#/definitions/UserPublic'
+      email:
+        title: Email
+        type: string
+        format: email
+        maxLength: 254
+        minLength: 1
+      token:
+        title: Token
+        type: string
+        format: uuid
+        readOnly: true
+      accepted:
+        title: Accepted
+        type: boolean
+        readOnly: true
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
   Label:
     required:
-    - color
     - board
+    - color
     type: object
     properties:
       label_id:
         title: Label id
         type: integer
         readOnly: true
+      board:
+        title: Board
+        type: integer
       name:
         title: Name
         type: string
@@ -1634,9 +2395,6 @@ definitions:
       archived:
         title: Archived
         type: boolean
-      board:
-        title: Board
-        type: integer
   CardLabel:
     required:
     - card
@@ -1672,7 +2430,7 @@ definitions:
         title: User
         type: integer
       user_details:
-        $ref: '#/definitions/User'
+        $ref: '#/definitions/UserPublic'
       added_at:
         title: Added at
         type: string
@@ -1680,15 +2438,18 @@ definitions:
         readOnly: true
   ChecklistItem:
     required:
+    - checklist
     - name
     - position
-    - checklist
     type: object
     properties:
       item_id:
         title: Item id
         type: integer
         readOnly: true
+      checklist:
+        title: Checklist
+        type: integer
       name:
         title: Name
         type: string
@@ -1707,9 +2468,6 @@ definitions:
         type: string
         format: date-time
         readOnly: true
-      checklist:
-        title: Checklist
-        type: integer
   Checklist:
     required:
     - card
@@ -1738,6 +2496,14 @@ definitions:
         type: string
         format: date-time
         readOnly: true
+      items_total:
+        title: Items total
+        type: integer
+        readOnly: true
+      items_checked:
+        title: Items checked
+        type: string
+        readOnly: true
       items:
         type: array
         items:
@@ -1745,38 +2511,20 @@ definitions:
         readOnly: true
   Card:
     required:
+    - list
     - title
     - position
-    - list
-    - board
     type: object
     properties:
       card_id:
         title: Card id
         type: integer
         readOnly: true
-      labels:
-        type: array
-        items:
-          $ref: '#/definitions/CardLabel'
-        readOnly: true
-      members:
-        type: array
-        items:
-          $ref: '#/definitions/CardMember'
-        readOnly: true
-      checklists:
-        type: array
-        items:
-          $ref: '#/definitions/Checklist'
-        readOnly: true
-      attachments:
-        type: array
-        items:
-          $ref: '#/definitions/Attachment'
-        readOnly: true
-      comments_count:
-        title: Comments count
+      list:
+        title: List
+        type: integer
+      board:
+        title: Board
         type: integer
         readOnly: true
       title:
@@ -1825,28 +2573,136 @@ definitions:
         type: string
         format: date-time
         readOnly: true
-      list:
-        title: List
+      labels:
+        type: array
+        items:
+          $ref: '#/definitions/CardLabel'
+        readOnly: true
+      members:
+        type: array
+        items:
+          $ref: '#/definitions/CardMember'
+        readOnly: true
+      checklists:
+        type: array
+        items:
+          $ref: '#/definitions/Checklist'
+        readOnly: true
+      attachments:
+        type: array
+        items:
+          $ref: '#/definitions/Attachment'
+        readOnly: true
+      comments_count:
+        title: Comments count
         type: integer
-      board:
-        title: Board
+        readOnly: true
+  Comment:
+    required:
+    - card
+    - content
+    type: object
+    properties:
+      comment_id:
+        title: Comment id
         type: integer
+        readOnly: true
+      card:
+        title: Card
+        type: integer
+      user:
+        title: User
+        type: integer
+        readOnly: true
+      user_details:
+        $ref: '#/definitions/UserPublic'
+      content:
+        title: Content
+        type: string
+        minLength: 1
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      updated_at:
+        title: Updated at
+        type: string
+        format: date-time
+        readOnly: true
+      is_edited:
+        title: Is edited
+        type: string
+        readOnly: true
+  CardList:
+    required:
+    - title
+    - position
+    type: object
+    properties:
+      card_id:
+        title: Card id
+        type: integer
+        readOnly: true
+      title:
+        title: Title
+        type: string
+        maxLength: 255
+        minLength: 1
+      description:
+        title: Description
+        type: string
+        x-nullable: true
+      position:
+        title: Position
+        type: integer
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+      due_date:
+        title: Due date
+        type: string
+        format: date-time
+        x-nullable: true
+      due_date_complete:
+        title: Due date complete
+        type: boolean
+      cover_image_url:
+        title: Cover image url
+        type: string
+        format: uri
+        maxLength: 500
+        x-nullable: true
+      archived:
+        title: Archived
+        type: boolean
+      labels:
+        type: array
+        items:
+          $ref: '#/definitions/CardLabel'
+        readOnly: true
+      members:
+        type: array
+        items:
+          $ref: '#/definitions/CardMember'
+        readOnly: true
+      comments_count:
+        title: Comments count
+        type: integer
+        readOnly: true
   List:
     required:
+    - board
     - name
     - position
-    - board
     type: object
     properties:
       list_id:
         title: List id
         type: integer
         readOnly: true
-      cards:
-        type: array
-        items:
-          $ref: '#/definitions/Card'
-        readOnly: true
+      board:
+        title: Board
+        type: integer
       name:
         title: Name
         type: string
@@ -1870,154 +2726,14 @@ definitions:
         type: string
         format: date-time
         readOnly: true
-      board:
-        title: Board
-        type: integer
-  Board:
-    required:
-    - name
-    type: object
-    properties:
-      board_id:
-        title: Board id
+      cards_count:
+        title: Cards count
         type: integer
         readOnly: true
-      name:
-        title: Name
-        type: string
-        maxLength: 100
-        minLength: 1
-      description:
-        title: Description
-        type: string
-        x-nullable: true
-      visibility:
-        title: Visibility
-        type: string
-        enum:
-        - public
-        - private
-        - workspace
-      background_type:
-        title: Background type
-        type: string
-        maxLength: 20
-        minLength: 1
-      background_value:
-        title: Background value
-        type: string
-        maxLength: 500
-        minLength: 1
-      creator:
-        title: Creator
-        type: integer
-        readOnly: true
-      creator_details:
-        $ref: '#/definitions/User'
-      position:
-        title: Position
-        type: integer
-        maximum: 9223372036854775807
-        minimum: -9223372036854775808
-      is_closed:
-        title: Is closed
-        type: boolean
-      created_at:
-        title: Created at
-        type: string
-        format: date-time
-        readOnly: true
-      updated_at:
-        title: Updated at
-        type: string
-        format: date-time
-        readOnly: true
-      lists:
+      cards:
         type: array
         items:
-          $ref: '#/definitions/List'
-        readOnly: true
-      members:
-        type: array
-        items:
-          $ref: '#/definitions/BoardMember'
-        readOnly: true
-  BoardInvitation:
-    required:
-    - board
-    - inviter
-    - email
-    type: object
-    properties:
-      id:
-        title: ID
-        type: integer
-        readOnly: true
-      board:
-        title: Board
-        type: integer
-      board_name:
-        title: Board name
-        type: string
-        readOnly: true
-        minLength: 1
-      inviter:
-        title: Inviter
-        type: integer
-      inviter_details:
-        $ref: '#/definitions/User'
-      email:
-        title: Email
-        type: string
-        format: email
-        maxLength: 254
-        minLength: 1
-      token:
-        title: Token
-        type: string
-        format: uuid
-        readOnly: true
-      accepted:
-        title: Accepted
-        type: boolean
-        readOnly: true
-      created_at:
-        title: Created at
-        type: string
-        format: date-time
-        readOnly: true
-  Comment:
-    required:
-    - card
-    - user
-    - content
-    type: object
-    properties:
-      comment_id:
-        title: Comment id
-        type: integer
-        readOnly: true
-      card:
-        title: Card
-        type: integer
-      user:
-        title: User
-        type: integer
-      user_details:
-        $ref: '#/definitions/User'
-      content:
-        title: Content
-        type: string
-        minLength: 1
-      created_at:
-        title: Created at
-        type: string
-        format: date-time
-        readOnly: true
-      updated_at:
-        title: Updated at
-        type: string
-        format: date-time
+          $ref: '#/definitions/CardList'
         readOnly: true
   Login:
     required:
@@ -2033,4 +2749,54 @@ definitions:
       password:
         title: Password
         type: string
+        minLength: 1
+  User:
+    required:
+    - username
+    - email
+    - password
+    type: object
+    properties:
+      user_id:
+        title: User id
+        type: integer
+        readOnly: true
+      username:
+        title: Username
+        type: string
+        maxLength: 50
+        minLength: 1
+      email:
+        title: Email
+        type: string
+        format: email
+        maxLength: 100
+        minLength: 1
+      first_name:
+        title: First name
+        type: string
+        maxLength: 50
+      last_name:
+        title: Last name
+        type: string
+        maxLength: 50
+      bio:
+        title: Bio
+        type: string
+        x-nullable: true
+      avatar_url:
+        title: Avatar url
+        type: string
+        format: uri
+        maxLength: 500
+        x-nullable: true
+      created_at:
+        title: Created at
+        type: string
+        format: date-time
+        readOnly: true
+      password:
+        title: Mot de passe
+        type: string
+        maxLength: 128
         minLength: 1

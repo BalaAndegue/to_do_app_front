@@ -24,6 +24,6 @@ export type Card = {
     readonly created_at?: string;
     readonly updated_at?: string;
     list: number;
-    board: number;
+    readonly board?: number;
 };
 
