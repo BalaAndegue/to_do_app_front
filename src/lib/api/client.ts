@@ -42,6 +42,10 @@ export const extractAuthToken = (payload: unknown): string | null => {
 
 export const normalizeApiError = (error: unknown): string => {
   if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return "Accès refusé. Vous n'avez pas la permission d'effectuer cette action.";
+    }
+
     const body = error.body as Record<string, unknown> | undefined;
 
     const detail =
@@ -63,4 +67,20 @@ export const normalizeApiError = (error: unknown): string => {
   }
 
   return "Une erreur inattendue est survenue.";
+};
+
+export const extractFieldErrors = (error: unknown): Record<string, string[]> => {
+  if (!(error instanceof ApiError)) return {};
+  const body = error.body as Record<string, unknown> | undefined;
+  if (!body) return {};
+  const skip = new Set(["detail", "non_field_errors", "message"]);
+  const result: Record<string, string[]> = {};
+  for (const [key, val] of Object.entries(body)) {
+    if (skip.has(key)) continue;
+    if (Array.isArray(val)) {
+      const strings = val.filter((v): v is string => typeof v === "string");
+      if (strings.length > 0) result[key] = strings;
+    }
+  }
+  return result;
 };
