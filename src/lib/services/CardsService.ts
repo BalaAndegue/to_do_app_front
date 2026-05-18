@@ -83,7 +83,7 @@ export class CardsService {
     public static cardsMove(
         cardId: string,
         data: { position: number; list_id?: number },
-    ): CancelablePromise<Card> {
+    ): CancelablePromise<{ success: boolean; data: Card }> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/cards/{card_id}/move/',

@@ -73,7 +73,8 @@ export function useCards(listId: number) {
 
   const moveCard = async (cardId: number, targetListId: number, position: number) => {
     try {
-      const updated = await CardsService.cardsMove(String(cardId), { position, list_id: targetListId });
+      const result = await CardsService.cardsMove(String(cardId), { position, list_id: targetListId });
+      const updated = result.data;
       if (targetListId !== listId) {
         setCards(prev => prev.filter(c => c.card_id !== cardId));
       } else {

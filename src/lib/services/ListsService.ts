@@ -59,4 +59,16 @@ export class ListsService {
             path: { list_id: listId },
         });
     }
+
+    public static listsMove(
+        listId: string,
+        data: { position: number },
+    ): CancelablePromise<{ success: boolean; data: List }> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/lists/{list_id}/move/',
+            path: { list_id: listId },
+            body: data,
+        });
+    }
 }

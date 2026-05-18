@@ -60,5 +60,5 @@ export function useLists(boardId: number) {
     }
   };
 
-  return { lists, fetchLists, loading, error, createList, renameList, deleteList };
+  return { lists, setLists, fetchLists, loading, error, createList, renameList, deleteList };
 }
