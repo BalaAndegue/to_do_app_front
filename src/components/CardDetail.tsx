@@ -28,16 +28,6 @@ import { normalizeApiError } from "@/lib/api/client";
 import { uploadFile, cloudinaryConfigured } from "@/lib/uploadFile";
 import { useAuth } from "@/components/AuthContext";
 
-/* ── Dégradé déterministe pour la couverture de carte ─────── */
-const COVERS: [string, string][] = [
-  ["#60a5fa", "#2563eb"], ["#c084fc", "#7c3aed"], ["#34d399", "#059669"],
-  ["#fb923c", "#ea580c"], ["#f472b6", "#db2777"], ["#2dd4bf", "#0d9488"],
-  ["#818cf8", "#4f46e5"], ["#fbbf24", "#d97706"],
-];
-function cardCover(id?: number) {
-  const [a, b] = COVERS[(id ?? 0) % COVERS.length];
-  return `linear-gradient(135deg, ${a}, ${b})`;
-}
 
 interface CardDetailProps {
   cardId: number;
@@ -343,29 +333,22 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
 
   const dueDateObj = card.due_date ? new Date(card.due_date) : null;
   const isOverdue  = dueDateObj && !card.due_date_complete && dueDateObj < new Date();
-  const cover      = cardCover(card.card_id);
+
+  const hasLabels  = (card.labels?.length ?? 0) > 0;
+  const hasMembers = (card.members?.length ?? 0) > 0;
+  const hasDates   = !!(card.start_date || card.due_date);
 
   return (
     <Overlay onClose={onClose}>
       <ModalShell>
-        {/* ── Couverture colorée ────────────────────── */}
-        <div className="relative h-24 w-full flex-shrink-0 rounded-t-2xl" style={{ background: cover }}>
-          <button
-            onClick={onClose}
-            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white transition hover:bg-black/50"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* ── En-tête ───────────────────────────────── */}
-        <div className="flex items-start gap-3 border-b border-[var(--line)] px-6 py-4">
-          <div className="mt-0.5 text-[var(--ink-3)]"><AlignLeft size={18} /></div>
-          <div className="flex-1 min-w-0">
+        {/* ── En-tête : titre + fermer ──────────────── */}
+        <div className="flex items-start gap-3 border-b border-[var(--line)] px-5 pt-5 pb-4">
+          <div className="mt-1 shrink-0 text-[var(--ink-3)]"><AlignLeft size={16} /></div>
+          <div className="min-w-0 flex-1">
             {editingTitle ? (
               <input
                 autoFocus
-                className="w-full rounded-xl border-2 border-brand-500 bg-[var(--surface)] px-3 py-2 text-xl font-black text-[var(--ink)] focus:outline-none"
+                className="w-full rounded-lg border-2 border-brand-500 bg-[var(--surface)] px-3 py-1.5 text-lg font-bold text-[var(--ink)] focus:outline-none"
                 value={titleDraft}
                 onChange={e => setTitleDraft(e.target.value)}
                 onBlur={saveTitle}
@@ -373,7 +356,7 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
               />
             ) : (
               <h2
-                className="cursor-pointer text-xl font-black text-[var(--ink)] transition hover:text-brand-500"
+                className="cursor-pointer text-lg font-bold leading-snug text-[var(--ink)] transition hover:text-brand-500"
                 onClick={() => setEditingTitle(true)}
                 title="Cliquer pour modifier"
               >
@@ -382,64 +365,73 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
             )}
             <p className="mt-0.5 text-xs text-[var(--ink-3)]">Carte #{card.card_id}</p>
           </div>
+          <button
+            onClick={onClose}
+            className="shrink-0 rounded-lg p-1.5 text-[var(--ink-3)] transition hover:bg-[var(--line)] hover:text-[var(--ink)]"
+          >
+            <X size={16} />
+          </button>
         </div>
 
         <div className="flex flex-1 overflow-hidden">
           {/* ── Contenu principal ─────────────────────── */}
-          <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-6 py-5">
+          <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-4">
 
-            {/* Labels appliqués */}
-            {(card.labels?.length ?? 0) > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {card.labels!.map(cl => (
-                  <span
-                    key={cl.id}
-                    className="rounded-full px-3 py-1 text-xs font-bold text-white shadow-sm"
-                    style={{ backgroundColor: cl.label_details?.color ?? "#888" }}
-                  >
-                    {cl.label_details?.name || "Label"}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Membres assignés */}
-            {(card.members?.length ?? 0) > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {card.members!.map(m => (
-                  <div key={m.id} className="flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--surface-3)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-xs font-black text-white">
-                      {(m.user_details?.username ?? "?").substring(0, 2).toUpperCase()}
-                    </span>
-                    {m.user_details?.username ?? `#${m.user}`}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Dates */}
-            {(card.start_date || card.due_date) && (
-              <div className="flex flex-wrap gap-4 rounded-xl border border-[var(--line)] bg-[var(--surface-3)] p-3">
-                {card.start_date && (
+            {/* Metadata strip: labels + membres + dates */}
+            {(hasLabels || hasMembers || hasDates) && (
+              <div className="flex flex-wrap gap-x-6 gap-y-3">
+                {hasLabels && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--ink-3)]">Début</p>
-                    <p className="mt-0.5 text-sm font-semibold text-[var(--ink)]">
-                      {new Date(card.start_date).toLocaleDateString("fr-FR")}
-                    </p>
+                    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--ink-3)]">Étiquettes</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {card.labels!.map(cl => (
+                        <span
+                          key={cl.id}
+                          className="rounded-md px-2.5 py-1 text-xs font-bold text-white shadow-sm"
+                          style={{ backgroundColor: cl.label_details?.color ?? "#888" }}
+                        >
+                          {cl.label_details?.name || "Label"}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
-                {card.due_date && (
+                {hasMembers && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--ink-3)]">Échéance</p>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <input type="checkbox" checked={!!card.due_date_complete}
-                        onChange={() => patchCard({ due_date_complete: !card.due_date_complete })}
-                        className="accent-brand-500" />
-                      <p className={`text-sm font-semibold ${isOverdue ? "text-red-500" : "text-[var(--ink)]"}`}>
-                        {dueDateObj!.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
-                        {isOverdue && <span className="ml-1 text-xs font-bold text-red-500">En retard</span>}
-                      </p>
+                    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--ink-3)]">Membres</p>
+                    <div className="flex -space-x-1.5">
+                      {card.members!.map(m => (
+                        <div
+                          key={m.id}
+                          title={m.user_details?.username ?? `#${m.user}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-brand-500 text-[10px] font-black text-white"
+                        >
+                          {(m.user_details?.username ?? "?")[0].toUpperCase()}
+                        </div>
+                      ))}
                     </div>
+                  </div>
+                )}
+                {hasDates && (
+                  <div>
+                    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--ink-3)]">Échéance</p>
+                    {card.due_date && (
+                      <label className={`flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${
+                        card.due_date_complete
+                          ? "bg-green-500 text-white"
+                          : isOverdue
+                            ? "bg-red-500 text-white"
+                            : "bg-[var(--surface-3)] text-[var(--ink)]"
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={!!card.due_date_complete}
+                          onChange={() => patchCard({ due_date_complete: !card.due_date_complete })}
+                          className="accent-white"
+                        />
+                        {dueDateObj!.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                      </label>
+                    )}
                   </div>
                 )}
               </div>
@@ -671,8 +663,8 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
           </div>
 
           {/* ── Sidebar ───────────────────────────────── */}
-          <aside className="flex w-52 flex-shrink-0 flex-col gap-1.5 overflow-y-auto border-l border-[var(--line)] px-4 py-5">
-            <p className="mb-1 text-xs font-bold uppercase tracking-widest text-[var(--ink-3)]">Ajouter</p>
+          <aside className="flex w-48 shrink-0 flex-col gap-1.5 overflow-y-auto border-l border-[var(--line)] px-3 py-4">
+            <p className="mb-1 text-xs font-bold uppercase tracking-widest text-[var(--ink-3)]">Ajouter à la carte</p>
 
             {/* Labels */}
             <SideAction icon={<Tag size={14} />} label="Labels"
@@ -824,7 +816,7 @@ function ModalShell({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="flex w-full flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] shadow-2xl"
-      style={{ maxWidth: "min(800px, 95vw)", maxHeight: "90vh" }}
+      style={{ maxWidth: "min(760px, 96vw)", maxHeight: "88vh" }}
     >
       {children}
     </div>

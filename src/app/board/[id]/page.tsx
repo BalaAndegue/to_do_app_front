@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useCallback, useEffect, useRef, useState } from "react";
-import { UserPlus, Users, LockOpen, Lock } from "lucide-react";
+import { UserPlus, Lock, LockOpen, X, Globe, Plus } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, KeyboardSensor,
   useSensor, useSensors, closestCorners,
@@ -14,7 +14,6 @@ import {
 import { useLists } from "../../../hooks/useLists";
 import { useBoardWebSocket } from "../../../hooks/useBoardWebSocket";
 import ListColumn from "../../../components/ui/ListColumn";
-import Button from "../../../components/ui/Button";
 import { BoardsService } from "@/lib/services/BoardsService";
 import { BoardMembersService } from "@/lib/services/BoardMembersService";
 import { CardsService } from "@/lib/services/CardsService";
@@ -27,8 +26,6 @@ import { normalizeApiError } from "@/lib/api/client";
 import { useAuth } from "@/components/AuthContext";
 import { useToast } from "@/components/ToastContext";
 
-type Panel = "invite" | "members" | null;
-
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const boardId = Number(id);
@@ -36,19 +33,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [board, setBoard]       = useState<Board | null>(null);
-  const [members, setMembers]   = useState<BoardMember[]>([]);
+  const [board, setBoard]             = useState<Board | null>(null);
+  const [members, setMembers]         = useState<BoardMember[]>([]);
   const [boardLoading, setBoardLoading] = useState(true);
-  const [boardError, setBoardError]     = useState<string | null>(null);
 
   const [newListName, setNewListName] = useState("");
-  const [activePanel, setActivePanel] = useState<Panel>(null);
+  const [addingList, setAddingList]   = useState(false);
+  const [shareOpen, setShareOpen]     = useState(false);
 
   // Invite form
   const [inviteEmail, setInviteEmail]     = useState("");
   const [inviteRole, setInviteRole]       = useState<"member" | "observer">("member");
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [inviteMsg, setInviteMsg]         = useState<string | null>(null);
   const [inviteError, setInviteError]     = useState<string | null>(null);
 
   // Member management
@@ -83,10 +79,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   // ── Card state helpers ────────────────────────────────────────
   const handleCardCreated = useCallback((listId: number, card: Card) => {
-    setCardsByList(prev => ({
-      ...prev,
-      [listId]: [...(prev[listId] ?? []), card],
-    }));
+    setCardsByList(prev => ({ ...prev, [listId]: [...(prev[listId] ?? []), card] }));
   }, []);
 
   const handleCardUpdated = useCallback((listId: number, card: Card) => {
@@ -106,7 +99,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   // ── Board fetch ───────────────────────────────────────────────
   const fetchBoard = useCallback(async () => {
     setBoardLoading(true);
-    setBoardError(null);
     try {
       const [b, m] = await Promise.all([
         BoardsService.boardsRead(String(boardId)),
@@ -115,11 +107,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       setBoard(b);
       setMembers(m);
     } catch (err) {
-      setBoardError(normalizeApiError(err));
+      toast(normalizeApiError(err), "error");
     } finally {
       setBoardLoading(false);
     }
-  }, [boardId]);
+  }, [boardId, toast]);
 
   useEffect(() => {
     fetchBoard();
@@ -130,12 +122,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const handleInvite = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     setInviteLoading(true);
-    setInviteMsg(null);
     setInviteError(null);
     try {
       await BoardsService.boardsInvite(String(boardId), { email: inviteEmail, role: inviteRole });
       toast(`Invitation envoyée à ${inviteEmail}.`, "success");
-      setInviteMsg(`Invitation envoyée à ${inviteEmail}.`);
       setInviteEmail("");
     } catch (err) {
       const msg = normalizeApiError(err);
@@ -186,9 +176,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       setBoard(prev => prev ? { ...prev, is_closed: true } : prev);
       toast("Tableau archivé.", "info");
     } catch (err) {
-      const msg = normalizeApiError(err);
-      toast(msg, "error");
-      setBoardError(msg);
+      toast(normalizeApiError(err), "error");
     }
   };
 
@@ -198,9 +186,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       setBoard(prev => prev ? { ...prev, is_closed: false } : prev);
       toast("Tableau rouvert.", "success");
     } catch (err) {
-      const msg = normalizeApiError(err);
-      toast(msg, "error");
-      setBoardError(msg);
+      toast(normalizeApiError(err), "error");
     }
   };
 
@@ -218,9 +204,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (!card.list) return;
       setCardsByList(prev => ({
         ...prev,
-        [card.list!]: (prev[card.list!] ?? []).map(c =>
-          c.card_id === card.card_id ? card : c
-        ),
+        [card.list!]: (prev[card.list!] ?? []).map(c => c.card_id === card.card_id ? card : c),
       }));
     },
     onCardDeleted: (cardId) => {
@@ -235,15 +219,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     },
     onCardMoved: (card) => {
       if (!card.list) return;
-      // Remove the card from whichever list currently holds it, then re-fetch
-      // the destination (and former source if different) to get correct positions.
       setCardsByList(prev => {
         const next = { ...prev };
         for (const key of Object.keys(next)) {
           const lid = Number(key);
           if (lid !== card.list && next[lid].some(c => c.card_id === card.card_id)) {
             next[lid] = next[lid].filter(c => c.card_id !== card.card_id);
-            fetchCardsForList(lid); // sync positions of the old list
+            fetchCardsForList(lid);
           }
         }
         return next;
@@ -299,13 +281,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (fromIndex === -1 || toIndex === -1) return;
 
       const reordered = arrayMove(sorted, fromIndex, toIndex);
-      setLists(reordered); // optimistic
+      setLists(reordered);
       try {
         await ListsService.listsMove(String(fromListId), { position: toIndex });
         await fetchLists();
       } catch {
         toast("Impossible de déplacer la liste.", "error");
-        await fetchLists(); // revert
+        await fetchLists();
       }
       return;
     }
@@ -338,24 +320,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       destIndex = idx === -1 ? destCards.length : idx;
     }
 
-    // Optimistic update
     const sourceCards = cardsByList[sourceListId] ?? [];
     if (destListId === sourceListId) {
       const fromIdx = sourceCards.findIndex(c => c.card_id === cardId);
       if (fromIdx === -1) return;
-      setCardsByList(prev => ({
-        ...prev,
-        [sourceListId]: arrayMove(sourceCards, fromIdx, destIndex),
-      }));
+      setCardsByList(prev => ({ ...prev, [sourceListId]: arrayMove(sourceCards, fromIdx, destIndex) }));
     } else {
       const filteredSource = sourceCards.filter(c => c.card_id !== cardId);
       const destCards      = [...(cardsByList[destListId] ?? [])];
       destCards.splice(destIndex, 0, sourceCard);
-      setCardsByList(prev => ({
-        ...prev,
-        [sourceListId]: filteredSource,
-        [destListId]:   destCards,
-      }));
+      setCardsByList(prev => ({ ...prev, [sourceListId]: filteredSource, [destListId]: destCards }));
     }
 
     try {
@@ -363,7 +337,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         position: destIndex,
         list_id: destListId !== sourceListId ? destListId : undefined,
       });
-      // Backend atomically shifts all positions — sync local state
       fetchCardsForList(sourceListId);
       if (destListId !== sourceListId) fetchCardsForList(destListId);
     } catch {
@@ -382,207 +355,106 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     ? { backgroundColor: board.background_value }
     : board?.background_type === "image"
       ? {
-          backgroundImage: `linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)), url(${board.background_value})`,
+          backgroundImage: `url(${board.background_value})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }
       : { background: "linear-gradient(135deg,#1e3a5f,#0f2040)" };
 
-  const togglePanel = (panel: Panel) => setActivePanel(prev => prev === panel ? null : panel);
-
   return (
-    <div className="mx-auto flex w-full max-w-[100vw] flex-col gap-6 px-6 py-10">
-      {/* ── En-tête du board ────────────────────────────── */}
-      <section className="rounded-3xl border border-white/10 p-6 text-white shadow-lg" style={bgStyle}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-yellow-300">Board</p>
-              {board?.is_closed && (
-                <span className="rounded-full bg-orange-500/30 px-3 py-0.5 text-xs font-bold text-orange-200">
-                  Archivé
-                </span>
-              )}
-            </div>
-            {boardLoading ? (
-              <h1 className="mt-2 text-3xl font-black uppercase opacity-60">Chargement…</h1>
-            ) : (
-              <h1 className="mt-2 truncate text-3xl font-black uppercase">{board?.name ?? `Board #${boardId}`}</h1>
-            )}
-            {board?.description && (
-              <p className="mt-2 max-w-xl text-sm text-gray-100/80">{board.description}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col items-end gap-3">
-            <button
-              onClick={() => togglePanel("members")}
-              className="flex items-center gap-1 group"
-              title="Voir / gérer les membres"
-            >
-              {members.slice(0, 6).map(m => (
-                <div
-                  key={m.id}
-                  title={`${m.user_details?.username ?? `#${m.user}`} — ${m.role}`}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-yellow-400 text-xs font-black text-black transition group-hover:scale-105"
-                >
-                  {(m.user_details?.username ?? "?").substring(0, 2).toUpperCase()}
-                </div>
-              ))}
-              {members.length > 6 && (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-black/40 text-xs font-bold text-white">
-                  +{members.length - 6}
-                </div>
-              )}
-            </button>
-
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              {board?.visibility && (
-                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold capitalize text-white">
-                  {board.visibility}
-                </span>
-              )}
-              <ActionButton
-                active={activePanel === "invite"}
-                onClick={() => {
-                  if (!isAdmin) { toast("Seul un admin peut inviter des membres.", "error"); return; }
-                  togglePanel("invite");
-                }}
-              >
-                <UserPlus size={14} className="inline mr-1.5" />Inviter
-              </ActionButton>
-              <ActionButton active={activePanel === "members"} onClick={() => togglePanel("members")}>
-                <Users size={14} className="inline mr-1.5" />{members.length} membre{members.length !== 1 ? "s" : ""}
-              </ActionButton>
-              {isAdmin && (
-                board?.is_closed ? (
-                  <ActionButton onClick={handleReopenBoard}><LockOpen size={14} className="inline mr-1.5" />Rouvrir</ActionButton>
-                ) : (
-                  <ActionButton onClick={handleCloseBoard} danger><Lock size={14} className="inline mr-1.5" />Fermer</ActionButton>
-                )
-              )}
-            </div>
-          </div>
+    <div className="flex min-h-screen flex-col" style={bgStyle}>
+      {/* ── Board header bar ─────────────────────────────────── */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-black/25 px-4 py-2.5 backdrop-blur-sm">
+        {/* Board name + status */}
+        <div className="mr-auto flex min-w-0 items-center gap-2">
+          {boardLoading ? (
+            <div className="h-5 w-36 animate-pulse rounded bg-white/20" />
+          ) : (
+            <h1 className="truncate text-[15px] font-bold text-white">
+              {board?.name ?? `Board #${boardId}`}
+            </h1>
+          )}
+          {board?.is_closed && (
+            <span className="shrink-0 rounded-full bg-orange-500/30 px-2 py-0.5 text-xs font-bold text-orange-200">
+              Archivé
+            </span>
+          )}
+          {board?.visibility && (
+            <span className="hidden shrink-0 items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold capitalize text-white/80 sm:flex">
+              {board.visibility === "private" ? <Lock size={10} /> : <Globe size={10} />}
+              {board.visibility}
+            </span>
+          )}
         </div>
 
-        {boardError && (
-          <p className="mt-3 rounded-xl bg-red-500/20 p-2 text-sm text-red-200">{boardError}</p>
-        )}
-
-        {/* ── Panel : Invitation ─────────────────────── */}
-        {activePanel === "invite" && isAdmin && (
-          <form onSubmit={handleInvite} className="mt-5 flex flex-wrap items-end gap-3 rounded-2xl bg-black/30 p-5 backdrop-blur-sm">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-yellow-200">Adresse e-mail</label>
-              <input
-                type="email" required
-                value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
-                placeholder="collaborateur@example.com"
-                className="rounded-xl border-2 border-yellow-400 bg-white px-3 py-2 text-sm text-black focus:outline-none"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-yellow-200">Rôle</label>
-              <select
-                value={inviteRole}
-                onChange={e => setInviteRole(e.target.value as "member" | "observer")}
-                className="rounded-xl border-2 border-yellow-400 bg-white px-3 py-2 text-sm text-black focus:outline-none"
-              >
-                <option value="member">Membre</option>
-                <option value="observer">Observateur</option>
-              </select>
-            </div>
-            <button
-              type="submit" disabled={inviteLoading}
-              className="rounded-xl bg-yellow-400 px-5 py-2 text-sm font-bold text-black hover:bg-orange-500 disabled:opacity-50"
+        {/* Member avatars */}
+        <button
+          className="flex shrink-0 -space-x-2 transition hover:opacity-80"
+          onClick={() => setShareOpen(true)}
+          title="Voir les membres"
+        >
+          {members.slice(0, 5).map(m => (
+            <div
+              key={m.id}
+              title={`${m.user_details?.username ?? `#${m.user}`} — ${m.role}`}
+              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/50 bg-brand-500 text-xs font-black text-white"
             >
-              {inviteLoading ? "Envoi…" : "Envoyer l'invitation"}
-            </button>
-            {inviteMsg   && <p className="text-sm text-green-300">{inviteMsg}</p>}
-            {inviteError && <p className="text-sm text-red-300">{inviteError}</p>}
-          </form>
-        )}
-
-        {/* ── Panel : Gestion membres ────────────────── */}
-        {activePanel === "members" && isAdmin && (
-          <div className="mt-5 rounded-2xl bg-black/30 p-5 backdrop-blur-sm">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-wider text-yellow-200">
-              Membres du tableau ({members.length})
-            </h3>
-            {memberError && (
-              <p className="mb-3 rounded-xl bg-red-500/20 p-2 text-sm text-red-200">{memberError}</p>
-            )}
-            <div className="flex flex-col gap-2">
-              {members.map(m => {
-                const isMe = m.user_details?.user_id === user?.user_id;
-                return (
-                  <div key={m.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-white/10 px-4 py-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow-400 text-sm font-black text-black">
-                      {(m.user_details?.username ?? "?").substring(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-bold text-white">
-                        {m.user_details?.username ?? `Membre #${m.user}`}
-                        {isMe && <span className="ml-2 text-xs font-normal text-yellow-300">(vous)</span>}
-                      </p>
-                      <p className="text-xs text-gray-300">{m.user_details?.email ?? ""}</p>
-                    </div>
-                    {m.joined_at && (
-                      <p className="hidden text-xs text-gray-400 sm:block">
-                        depuis {new Date(m.joined_at).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}
-                      </p>
-                    )}
-                    {!isMe && (
-                      <select
-                        value={m.role ?? "member"}
-                        disabled={roleUpdating === m.id}
-                        onChange={e => handleChangeRole(m.id!, e.target.value as BoardMember.role)}
-                        className="rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white focus:border-yellow-400 focus:outline-none"
-                      >
-                        <option value="admin" className="text-black">Admin</option>
-                        <option value="member" className="text-black">Membre</option>
-                        <option value="observer" className="text-black">Observateur</option>
-                      </select>
-                    )}
-                    {isMe && (
-                      <span className="rounded-full bg-yellow-400/20 px-3 py-1 text-xs font-bold capitalize text-yellow-200">
-                        {m.role}
-                      </span>
-                    )}
-                    {!isMe && (
-                      <button
-                        onClick={() => handleRemoveMember(m.id!)}
-                        disabled={removing === m.id}
-                        className="rounded-xl border border-red-400/30 px-3 py-1.5 text-sm font-bold text-red-300 hover:border-red-400 hover:bg-red-500/20 disabled:opacity-50"
-                      >
-                        {removing === m.id ? "…" : "Retirer"}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+              {(m.user_details?.username ?? "?")[0].toUpperCase()}
             </div>
-          </div>
-        )}
-      </section>
+          ))}
+          {members.length > 5 && (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/50 bg-black/40 text-xs font-bold text-white">
+              +{members.length - 5}
+            </div>
+          )}
+        </button>
 
-      {/* ── Kanban DnD ──────────────────────────────────────────── */}
+        {/* Partager button */}
+        <button
+          onClick={() => {
+            if (!isAdmin) { toast("Seul un admin peut partager le tableau.", "error"); return; }
+            setShareOpen(true);
+          }}
+          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/30"
+        >
+          <UserPlus size={14} />
+          <span className="hidden sm:inline">Partager</span>
+        </button>
+
+        {/* Admin: close / reopen */}
+        {isAdmin && (
+          board?.is_closed ? (
+            <button
+              onClick={handleReopenBoard}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/30"
+            >
+              <LockOpen size={14} />
+              <span className="hidden sm:inline">Rouvrir</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleCloseBoard}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg border border-red-300/30 bg-red-900/50 px-3 py-1.5 text-sm font-semibold text-red-200 backdrop-blur-sm transition hover:bg-red-900/70"
+            >
+              <Lock size={14} />
+              <span className="hidden sm:inline">Fermer</span>
+            </button>
+          )
+        )}
+      </div>
+
+      {/* ── Kanban DnD ─────────────────────────────────────────── */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {listsLoading && (
-            <div className="flex items-center gap-3 text-gray-400">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-yellow-500" />
-              Chargement des listes…
-            </div>
-          )}
+        <div className="flex flex-1 items-start gap-4 overflow-x-auto p-4 pb-8">
           {listsError && (
-            <div className="rounded-xl bg-red-100 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">{listsError}</div>
+            <div className="rounded-xl bg-red-500/20 p-3 text-sm font-semibold text-red-200 backdrop-blur-sm">
+              {listsError}
+            </div>
           )}
 
           <SortableContext
@@ -605,74 +477,237 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             ))}
           </SortableContext>
 
-          {/* Ajouter une liste */}
-          <div className="flex h-fit min-w-72 flex-shrink-0 flex-col gap-2 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-card">
-            <p className="text-xs font-bold uppercase tracking-wider text-[var(--ink-3)]">Nouvelle liste</p>
-            <input
-              type="text"
-              value={newListName}
-              onChange={e => setNewListName(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter") {
-                  createList(newListName).then(ok => {
+          {/* ── Add list ──────────────────────────────────────── */}
+          {addingList ? (
+            <div className="flex h-fit min-w-72 shrink-0 flex-col gap-2 rounded-xl border border-white/10 bg-black/30 p-3 backdrop-blur-sm">
+              <input
+                autoFocus
+                type="text"
+                value={newListName}
+                onChange={e => setNewListName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    createList(newListName).then(ok => {
+                      if (ok) { setNewListName(""); toast("Liste créée.", "success"); }
+                      else toast("Impossible de créer la liste.", "error");
+                    });
+                  }
+                  if (e.key === "Escape") { setAddingList(false); setNewListName(""); }
+                }}
+                placeholder="Saisissez le titre de la liste…"
+                className="w-full rounded-lg border-2 border-brand-500 bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-3)] focus:outline-none"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => createList(newListName).then(ok => {
                     if (ok) { setNewListName(""); toast("Liste créée.", "success"); }
                     else toast("Impossible de créer la liste.", "error");
-                  });
-                }
-              }}
-              placeholder="Nom de la liste…"
-              className="rounded-xl border-2 border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-3)] focus:border-brand-500 focus:outline-none transition"
-            />
-            <Button
-              onClick={() => createList(newListName).then(ok => {
-                if (ok) { setNewListName(""); toast("Liste créée.", "success"); }
-                else toast("Impossible de créer la liste.", "error");
-              })}
-              disabled={listsLoading || !newListName.trim()}
+                  })}
+                  disabled={listsLoading || !newListName.trim()}
+                  className="rounded-lg bg-brand-500 px-4 py-1.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-40"
+                >
+                  Ajouter une liste
+                </button>
+                <button
+                  onClick={() => { setAddingList(false); setNewListName(""); }}
+                  className="rounded-lg p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setAddingList(true)}
+              className="flex h-fit min-w-72 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm font-semibold text-white/80 backdrop-blur-sm transition hover:bg-black/30 hover:text-white"
             >
-              + Ajouter
-            </Button>
-          </div>
+              <Plus size={16} />
+              Ajouter une liste
+            </button>
+          )}
         </div>
 
-        {/* ── Drag overlay ────────────────────────────────────── */}
+        {/* ── Drag overlay ──────────────────────────────────── */}
         <DragOverlay>
           {activeItem?.type === "card" && (
-            <div className="w-72 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3 shadow-2xl opacity-90 rotate-1">
+            <div className="w-72 rounded-xl bg-[var(--surface)] p-3 shadow-2xl opacity-90 rotate-1">
               <p className="text-sm font-semibold text-[var(--ink)]">{activeItem.card.title}</p>
             </div>
           )}
           {activeItem?.type === "list" && (
-            <div className="w-72 rounded-2xl border border-[var(--line)] bg-[var(--surface-3)] px-4 py-3 shadow-2xl opacity-90 rotate-1">
+            <div className="w-72 rounded-xl bg-[var(--surface-3)] px-4 py-3 shadow-2xl opacity-90 rotate-1">
               <p className="text-sm font-bold text-[var(--ink)]">{activeItem.list.name}</p>
             </div>
           )}
         </DragOverlay>
       </DndContext>
+
+      {/* ── Share modal ────────────────────────────────────────── */}
+      {shareOpen && (
+        <ShareModal
+          members={members}
+          isAdmin={isAdmin}
+          user={user}
+          inviteEmail={inviteEmail}
+          inviteRole={inviteRole}
+          inviteLoading={inviteLoading}
+          inviteError={inviteError}
+          memberError={memberError}
+          roleUpdating={roleUpdating}
+          removing={removing}
+          onClose={() => setShareOpen(false)}
+          onInviteEmailChange={setInviteEmail}
+          onInviteRoleChange={setInviteRole}
+          onInvite={handleInvite}
+          onChangeRole={handleChangeRole}
+          onRemoveMember={handleRemoveMember}
+        />
+      )}
     </div>
   );
 }
 
-function ActionButton({
-  children, onClick, active = false, danger = false,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  active?: boolean;
-  danger?: boolean;
-}) {
+/* ── Share modal ──────────────────────────────────────────────── */
+interface ShareModalProps {
+  members: BoardMember[];
+  isAdmin: boolean;
+  user: { user_id?: number; username?: string } | null;
+  inviteEmail: string;
+  inviteRole: "member" | "observer";
+  inviteLoading: boolean;
+  inviteError: string | null;
+  memberError: string | null;
+  roleUpdating: number | null;
+  removing: number | null;
+  onClose: () => void;
+  onInviteEmailChange: (v: string) => void;
+  onInviteRoleChange: (v: "member" | "observer") => void;
+  onInvite: (e: { preventDefault(): void }) => void;
+  onChangeRole: (memberId: number, role: BoardMember.role) => void;
+  onRemoveMember: (memberId: number) => void;
+}
+
+function ShareModal({
+  members, isAdmin, user,
+  inviteEmail, inviteRole, inviteLoading, inviteError,
+  memberError, roleUpdating, removing,
+  onClose, onInviteEmailChange, onInviteRoleChange,
+  onInvite, onChangeRole, onRemoveMember,
+}: ShareModalProps) {
   return (
-    <button
-      onClick={onClick}
-      className={`rounded-xl border px-4 py-1.5 text-sm font-bold backdrop-blur-sm transition ${
-        active
-          ? "border-yellow-400 bg-yellow-400 text-black"
-          : danger
-            ? "border-red-300/40 bg-red-900/50 text-red-200 hover:border-red-300 hover:bg-red-900/70"
-            : "border-white/30 bg-black/50 text-white hover:bg-black/70"
-      }`}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      {children}
-    </button>
+      <div className="flex w-full max-w-md flex-col rounded-2xl bg-[var(--surface)] shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+          <h2 className="text-base font-bold text-[var(--ink)]">Partager le tableau</h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-[var(--ink-3)] transition hover:bg-[var(--line)] hover:text-[var(--ink)]"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Invite form (admin only) */}
+        {isAdmin && (
+          <form onSubmit={onInvite} className="border-b border-[var(--line)] px-5 py-4">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--ink-3)]">
+              Inviter par e-mail
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                required
+                value={inviteEmail}
+                onChange={e => onInviteEmailChange(e.target.value)}
+                placeholder="collaborateur@example.com"
+                className="min-w-0 flex-1 rounded-lg border border-[var(--line)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-3)] focus:border-brand-500 focus:outline-none"
+              />
+              <select
+                value={inviteRole}
+                onChange={e => onInviteRoleChange(e.target.value as "member" | "observer")}
+                className="rounded-lg border border-[var(--line)] bg-[var(--surface-3)] px-2 py-2 text-sm text-[var(--ink)] focus:border-brand-500 focus:outline-none"
+              >
+                <option value="member">Membre</option>
+                <option value="observer">Observateur</option>
+              </select>
+              <button
+                type="submit"
+                disabled={inviteLoading}
+                className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-40"
+              >
+                {inviteLoading ? "…" : "Inviter"}
+              </button>
+            </div>
+            {inviteError && <p className="mt-2 text-xs text-red-500">{inviteError}</p>}
+          </form>
+        )}
+
+        {/* Members list */}
+        <div className="max-h-80 overflow-y-auto px-5 py-4">
+          <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[var(--ink-3)]">
+            Membres ({members.length})
+          </p>
+          {memberError && <p className="mb-3 text-xs text-red-500">{memberError}</p>}
+          <div className="flex flex-col gap-1">
+            {members.map(m => {
+              const isMe = m.user_details?.user_id === user?.user_id;
+              return (
+                <div
+                  key={m.id}
+                  className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-[var(--surface-3)]"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-sm font-black text-white">
+                    {(m.user_details?.username ?? "?")[0].toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[var(--ink)]">
+                      {m.user_details?.username ?? `Membre #${m.user}`}
+                      {isMe && (
+                        <span className="ml-1.5 text-xs font-normal text-[var(--ink-3)]">(vous)</span>
+                      )}
+                    </p>
+                    <p className="truncate text-xs text-[var(--ink-3)]">
+                      {m.user_details?.email ?? ""}
+                    </p>
+                  </div>
+
+                  {!isMe && isAdmin ? (
+                    <select
+                      value={m.role ?? "member"}
+                      disabled={roleUpdating === m.id}
+                      onChange={e => onChangeRole(m.id!, e.target.value as BoardMember.role)}
+                      className="rounded-lg border border-[var(--line)] bg-[var(--surface-3)] px-2 py-1.5 text-xs font-semibold text-[var(--ink)] focus:border-brand-500 focus:outline-none disabled:opacity-50"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="member">Membre</option>
+                      <option value="observer">Observateur</option>
+                    </select>
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-[var(--surface-3)] px-2.5 py-1 text-xs font-semibold capitalize text-[var(--ink-3)]">
+                      {m.role}
+                    </span>
+                  )}
+
+                  {!isMe && isAdmin && (
+                    <button
+                      onClick={() => onRemoveMember(m.id!)}
+                      disabled={removing === m.id}
+                      title="Retirer ce membre"
+                      className="shrink-0 rounded-lg p-1.5 text-[var(--ink-3)] transition hover:bg-red-50 hover:text-red-500 disabled:opacity-40 dark:hover:bg-red-900/20"
+                    >
+                      {removing === m.id ? "…" : <X size={14} />}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
