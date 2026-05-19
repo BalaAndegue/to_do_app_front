@@ -4,7 +4,7 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import { UserPlus, Users, LockOpen, Lock } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, KeyboardSensor,
-  useSensor, useSensors, closestCenter,
+  useSensor, useSensors, closestCorners,
   type DragStartEvent, type DragEndEvent,
 } from "@dnd-kit/core";
 import {
@@ -25,6 +25,7 @@ import { Card } from "@/lib/models/Card";
 import { List } from "@/lib/models/List";
 import { normalizeApiError } from "@/lib/api/client";
 import { useAuth } from "@/components/AuthContext";
+import { useToast } from "@/components/ToastContext";
 
 type Panel = "invite" | "members" | null;
 
@@ -33,6 +34,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const boardId = Number(id);
   const { lists, setLists, fetchLists, loading: listsLoading, error: listsError, createList, renameList, deleteList } = useLists(boardId);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [board, setBoard]       = useState<Board | null>(null);
   const [members, setMembers]   = useState<BoardMember[]>([]);
@@ -132,10 +134,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     setInviteError(null);
     try {
       await BoardsService.boardsInvite(String(boardId), { email: inviteEmail, role: inviteRole });
+      toast(`Invitation envoyée à ${inviteEmail}.`, "success");
       setInviteMsg(`Invitation envoyée à ${inviteEmail}.`);
       setInviteEmail("");
     } catch (err) {
-      setInviteError(normalizeApiError(err));
+      const msg = normalizeApiError(err);
+      toast(msg, "error");
+      setInviteError(msg);
     } finally {
       setInviteLoading(false);
     }
@@ -147,8 +152,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     try {
       const updated = await BoardMembersService.boardMembersPartialUpdate(String(memberId), { role });
       setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: updated.role } : m));
+      toast("Rôle mis à jour.", "success");
     } catch (err) {
-      setMemberError(normalizeApiError(err));
+      const msg = normalizeApiError(err);
+      toast(msg, "error");
+      setMemberError(msg);
     } finally {
       setRoleUpdating(null);
     }
@@ -161,8 +169,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     try {
       await BoardMembersService.boardMembersDelete(String(memberId));
       setMembers(prev => prev.filter(m => m.id !== memberId));
+      toast("Membre retiré du tableau.", "success");
     } catch (err) {
-      setMemberError(normalizeApiError(err));
+      const msg = normalizeApiError(err);
+      toast(msg, "error");
+      setMemberError(msg);
     } finally {
       setRemoving(null);
     }
@@ -173,8 +184,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     try {
       await BoardsService.boardsClose(String(boardId));
       setBoard(prev => prev ? { ...prev, is_closed: true } : prev);
+      toast("Tableau archivé.", "info");
     } catch (err) {
-      setBoardError(normalizeApiError(err));
+      const msg = normalizeApiError(err);
+      toast(msg, "error");
+      setBoardError(msg);
     }
   };
 
@@ -182,8 +196,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     try {
       await BoardsService.boardsReopen(String(boardId));
       setBoard(prev => prev ? { ...prev, is_closed: false } : prev);
+      toast("Tableau rouvert.", "success");
     } catch (err) {
-      setBoardError(normalizeApiError(err));
+      const msg = normalizeApiError(err);
+      toast(msg, "error");
+      setBoardError(msg);
     }
   };
 
@@ -287,6 +304,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         await ListsService.listsMove(String(fromListId), { position: toIndex });
         await fetchLists();
       } catch {
+        toast("Impossible de déplacer la liste.", "error");
         await fetchLists(); // revert
       }
       return;
@@ -349,6 +367,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       fetchCardsForList(sourceListId);
       if (destListId !== sourceListId) fetchCardsForList(destListId);
     } catch {
+      toast("Impossible de déplacer la carte.", "error");
       fetchCardsForList(sourceListId);
       if (destListId !== sourceListId) fetchCardsForList(destListId);
     }
@@ -396,12 +415,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           <div className="flex flex-col items-end gap-3">
-            <div className="flex items-center gap-1">
+            <button
+              onClick={() => togglePanel("members")}
+              className="flex items-center gap-1 group"
+              title="Voir / gérer les membres"
+            >
               {members.slice(0, 6).map(m => (
                 <div
                   key={m.id}
                   title={`${m.user_details?.username ?? `#${m.user}`} — ${m.role}`}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-yellow-400 text-xs font-black text-black"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-yellow-400 text-xs font-black text-black transition group-hover:scale-105"
                 >
                   {(m.user_details?.username ?? "?").substring(0, 2).toUpperCase()}
                 </div>
@@ -411,7 +434,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   +{members.length - 6}
                 </div>
               )}
-            </div>
+            </button>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
               {board?.visibility && (
@@ -419,20 +442,24 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   {board.visibility}
                 </span>
               )}
+              <ActionButton
+                active={activePanel === "invite"}
+                onClick={() => {
+                  if (!isAdmin) { toast("Seul un admin peut inviter des membres.", "error"); return; }
+                  togglePanel("invite");
+                }}
+              >
+                <UserPlus size={14} className="inline mr-1.5" />Inviter
+              </ActionButton>
+              <ActionButton active={activePanel === "members"} onClick={() => togglePanel("members")}>
+                <Users size={14} className="inline mr-1.5" />{members.length} membre{members.length !== 1 ? "s" : ""}
+              </ActionButton>
               {isAdmin && (
-                <>
-                  <ActionButton active={activePanel === "invite"} onClick={() => togglePanel("invite")}>
-                    <UserPlus size={14} className="inline mr-1.5" />Inviter
-                  </ActionButton>
-                  <ActionButton active={activePanel === "members"} onClick={() => togglePanel("members")}>
-                    <Users size={14} className="inline mr-1.5" />Membres
-                  </ActionButton>
-                  {board?.is_closed ? (
-                    <ActionButton onClick={handleReopenBoard}><LockOpen size={14} className="inline mr-1.5" />Rouvrir</ActionButton>
-                  ) : (
-                    <ActionButton onClick={handleCloseBoard} danger><Lock size={14} className="inline mr-1.5" />Fermer</ActionButton>
-                  )}
-                </>
+                board?.is_closed ? (
+                  <ActionButton onClick={handleReopenBoard}><LockOpen size={14} className="inline mr-1.5" />Rouvrir</ActionButton>
+                ) : (
+                  <ActionButton onClick={handleCloseBoard} danger><Lock size={14} className="inline mr-1.5" />Fermer</ActionButton>
+                )
               )}
             </div>
           </div>
@@ -543,7 +570,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       {/* ── Kanban DnD ──────────────────────────────────────────── */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -586,13 +613,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               value={newListName}
               onChange={e => setNewListName(e.target.value)}
               onKeyDown={e => {
-                if (e.key === "Enter") { createList(newListName).then(ok => ok && setNewListName("")); }
+                if (e.key === "Enter") {
+                  createList(newListName).then(ok => {
+                    if (ok) { setNewListName(""); toast("Liste créée.", "success"); }
+                    else toast("Impossible de créer la liste.", "error");
+                  });
+                }
               }}
               placeholder="Nom de la liste…"
               className="rounded-xl border-2 border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-3)] focus:border-brand-500 focus:outline-none transition"
             />
             <Button
-              onClick={() => createList(newListName).then(ok => ok && setNewListName(""))}
+              onClick={() => createList(newListName).then(ok => {
+                if (ok) { setNewListName(""); toast("Liste créée.", "success"); }
+                else toast("Impossible de créer la liste.", "error");
+              })}
               disabled={listsLoading || !newListName.trim()}
             >
               + Ajouter
@@ -629,12 +664,12 @@ function ActionButton({
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl border px-4 py-1.5 text-sm font-bold transition ${
+      className={`rounded-xl border px-4 py-1.5 text-sm font-bold backdrop-blur-sm transition ${
         active
           ? "border-yellow-400 bg-yellow-400 text-black"
           : danger
-            ? "border-red-400/40 bg-red-500/20 text-red-200 hover:border-red-400 hover:bg-red-500/30"
-            : "border-white/20 bg-white/10 text-white hover:bg-white/20"
+            ? "border-red-300/40 bg-red-900/50 text-red-200 hover:border-red-300 hover:bg-red-900/70"
+            : "border-white/30 bg-black/50 text-white hover:bg-black/70"
       }`}
     >
       {children}

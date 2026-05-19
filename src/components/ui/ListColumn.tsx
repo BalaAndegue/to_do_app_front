@@ -5,7 +5,6 @@ import { MoreHorizontal, Plus, X, MessageCircle, Calendar, GripVertical } from "
 import {
   SortableContext, useSortable, verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { List, Card } from "@/lib";
 import { CardsService } from "@/lib/services/CardsService";
@@ -64,9 +63,6 @@ export default function ListColumn({
     transition: listTransition,
     opacity: isListDragging ? 0.4 : 1,
   };
-
-  // ── Droppable zone for receiving dragged cards ───────────────
-  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `list-${listId}` });
 
   // ── UI state ─────────────────────────────────────────────────
   const [newCardTitle, setNewCardTitle] = useState("");
@@ -206,8 +202,7 @@ export default function ListColumn({
 
       {/* ── Cartes ─────────────────────────────────── */}
       <div
-        ref={setDropRef}
-        className={`flex flex-col gap-2 overflow-y-auto px-3 pb-2 transition-colors ${isOver ? "bg-brand-50/50 dark:bg-brand-900/10" : ""}`}
+        className="flex flex-col gap-2 overflow-y-auto px-3 pb-2"
         style={{ maxHeight: "calc(100vh - 280px)", minHeight: "2rem" }}
       >
         {isLoading && <div className="shimmer h-20 rounded-xl" />}

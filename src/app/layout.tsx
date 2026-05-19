@@ -7,6 +7,7 @@ import "./globals.css";
 import { AuthProvider, useAuth } from "@/components/AuthContext";
 import CookieConsent from "@/components/CookieConsent";
 import Tooltip from "@/components/Tooltip";
+import { ToastProvider } from "@/components/ToastContext";
 
 /* ── Theme bootstrap (runs before first paint) ── */
 const ThemeScript = () => (
@@ -31,8 +32,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-[var(--surface-2)] text-[var(--ink)] antialiased transition-colors duration-200">
         <AuthProvider>
-          <AppShell>{children}</AppShell>
-          <CookieConsent />
+          <ToastProvider>
+            <AppShell>{children}</AppShell>
+            <CookieConsent />
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>
@@ -203,8 +206,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
       {/* ── Page content ──────────────────────────────────── */}
       <main className="flex-1 w-full">{children}</main>
 
-      {/* ── Footer ────────────────────────────────────────── */}
-      <footer className="border-t border-[var(--line)] bg-[#0B0F1A] text-white transition-colors duration-200">
+      {/* ── Footer — home only ────────────────────────────── */}
+      {pathname === "/" && <footer className="border-t border-[var(--line)] bg-[#0B0F1A] text-white transition-colors duration-200">
         <div className="mx-auto w-full max-w-7xl px-6 py-14">
           <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
             {/* Brand */}
@@ -269,7 +272,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
-      </footer>
+      </footer>}
     </div>
   );
 }
