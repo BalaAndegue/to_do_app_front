@@ -4,7 +4,7 @@ import { useState } from "react";
 import { LoginService } from "@/lib";
 import { useAuth } from "@/components/AuthContext";
 import { useRouter } from "next/navigation";
-import { extractAuthToken, normalizeApiError } from "@/lib/api/client";
+import { normalizeApiError } from "@/lib/api/client";
 import { uiImages } from "@/lib/ui-images";
 
 export default function Login() {
@@ -12,7 +12,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { loginWithUser } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,15 +21,9 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await LoginService.loginCreate({ email, password });
-      const token = extractAuthToken(response);
-
-      if (token) {
-        login(token);
-        router.push("/");
-      } else {
-        setError("Réponse du serveur invalide : token non trouvé.");
-      }
+      const res = await LoginService.loginCreate({ email, password });
+      loginWithUser(res.token, res.user);
+      router.push("/spaces");
     } catch (error: unknown) {
       setError(normalizeApiError(error));
     } finally {

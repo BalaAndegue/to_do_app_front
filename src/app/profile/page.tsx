@@ -1,63 +1,61 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Camera, Lock, LogOut, Pencil, X, Check } from "lucide-react";
 import { UsersService } from "@/lib/services/UsersService";
 import { User } from "@/lib/models/User";
 import { useAuth } from "@/components/AuthContext";
 import { normalizeApiError } from "@/lib/api/client";
-import { uiImages } from "@/lib/ui-images";
+import { useToast } from "@/components/ToastContext";
 
 export default function ProfilePage() {
-  const { user: authUser, logout, refreshUser, login } = useAuth();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const { user: authUser, logout, refreshUser, loginWithUser } = useAuth();
+  const { toast } = useToast();
+  const [user, setUser]         = useState<User | null>(null);
+  const [loading, setLoading]   = useState(true);
+  const [editing, setEditing]   = useState(false);
+  const [saving, setSaving]     = useState(false);
 
-  const [form, setForm] = useState({ first_name: "", last_name: "", bio: "", avatar_url: "" });
-  const [pwForm, setPwForm] = useState({ new_password: "", confirm: "" });
-  const [pwError, setPwError] = useState<string | null>(null);
-  const [pwSuccess, setPwSuccess] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    username: "", first_name: "", last_name: "", bio: "", avatar_url: "",
+  });
+
+  const [pwForm, setPwForm]   = useState({ new_password: "", confirm: "" });
   const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
 
   useEffect(() => {
     UsersService.usersMe()
       .then((u) => {
         setUser(u);
         setForm({
-          first_name: u.first_name || "",
-          last_name: u.last_name || "",
-          bio: u.bio || "",
-          avatar_url: u.avatar_url || "",
+          username:   u.username   ?? "",
+          first_name: u.first_name ?? "",
+          last_name:  u.last_name  ?? "",
+          bio:        u.bio        ?? "",
+          avatar_url: u.avatar_url ?? "",
         });
       })
-      .catch(() => setError("Impossible de charger le profil."))
+      .catch(() => toast("Impossible de charger le profil.", "error"))
       .finally(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {
-    if (!user?.user_id) return;
     setSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
-      const updated = await UsersService.usersPartialUpdate(user.user_id, {
+      const updated = await UsersService.usersUpdateMe({
+        username:   form.username   || undefined,
         first_name: form.first_name || undefined,
-        last_name: form.last_name || undefined,
-        bio: form.bio || undefined,
+        last_name:  form.last_name  || undefined,
+        bio:        form.bio        || undefined,
         avatar_url: form.avatar_url || undefined,
-        username: user.username,
-        email: user.email,
-        password: "",
       });
       setUser(updated);
       await refreshUser();
       setEditing(false);
-      setSuccess("Profil mis à jour avec succès.");
+      toast("Profil mis à jour.", "success");
     } catch (err) {
-      setError(normalizeApiError(err));
+      toast(normalizeApiError(err), "error");
     } finally {
       setSaving(false);
     }
@@ -71,11 +69,10 @@ export default function ProfilePage() {
     }
     setPwLoading(true);
     setPwError(null);
-    setPwSuccess(null);
     try {
       const res = await UsersService.usersChangePassword({ new_password: pwForm.new_password });
-      if (res.data?.token) login(res.data.token);
-      setPwSuccess("Mot de passe modifié. Nouveau token appliqué automatiquement.");
+      if (res.data?.token && user) loginWithUser(res.data.token, user);
+      toast("Mot de passe modifié.", "success");
       setPwForm({ new_password: "", confirm: "" });
     } catch (err) {
       setPwError(normalizeApiError(err));
@@ -84,148 +81,151 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <div className="p-10 text-gray-500">Chargement du profil...</div>;
+  const initials = (user?.username ?? authUser?.username ?? "?").substring(0, 2).toUpperCase();
+  const displayName = user?.username ?? authUser?.username ?? "—";
 
-  const displayName = user?.username || authUser?.username || "?";
-  const initials = displayName.substring(0, 2).toUpperCase();
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-10">
+        <div className="shimmer mb-4 h-10 w-48 rounded-xl" />
+        <div className="shimmer h-64 rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto mt-8 flex w-full max-w-5xl flex-col gap-6 px-6 pb-12">
-      <header
-        className="rounded-3xl border border-gray-200 bg-cover bg-center p-8 text-white"
-        style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)), url(${uiImages.profileBanner})` }}
-      >
-        <h1 className="text-3xl font-black uppercase">Mon profil</h1>
-        <p className="mt-2 text-gray-100">Gérez vos informations personnelles.</p>
-      </header>
+    <div className="mx-auto w-full max-w-2xl px-6 py-10">
+      <div className="mb-6">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-500">Compte</p>
+        <h1 className="mt-1 text-3xl font-black uppercase text-[var(--ink)]">Mon profil</h1>
+      </div>
 
-      {error && <div className="border-l-4 border-red-500 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-      {success && <div className="border-l-4 border-green-500 bg-green-50 p-3 text-sm text-green-700">{success}</div>}
-
-      {/* Infos profil */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 flex items-center gap-5 border-b border-gray-200 pb-6">
-          <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full bg-yellow-400 text-2xl font-black text-black">
-            {initials}
-          </div>
-          <div>
-            <p className="text-xl font-black text-black">{user?.username}</p>
-            <p className="text-gray-500">{user?.email}</p>
-            {user?.created_at && (
-              <p className="mt-1 text-xs text-gray-400">
-                Membre depuis {new Date(user.created_at).toLocaleDateString("fr-FR")}
-              </p>
-            )}
-          </div>
+      {/* ── Avatar + identité ───────────────────────────────── */}
+      <div className="mb-4 flex items-center gap-5 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-card">
+        <div className="relative shrink-0">
+          {user?.avatar_url ? (
+            <img
+              src={user.avatar_url}
+              alt={displayName}
+              className="h-20 w-20 rounded-full object-cover ring-4 ring-brand-500/30"
+            />
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-2xl font-black text-white ring-4 ring-brand-500/20">
+              {initials}
+            </div>
+          )}
+          {editing && (
+            <label className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-[var(--surface)] shadow border border-[var(--line)] text-[var(--ink-3)] hover:text-brand-500 transition">
+              <Camera size={13} />
+            </label>
+          )}
         </div>
 
-        {!editing ? (
-          <>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <InfoRow label="Prénom" value={user?.first_name} />
-              <InfoRow label="Nom" value={user?.last_name} />
-              <InfoRow label="Bio" value={user?.bio} className="sm:col-span-2" />
-            </dl>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setEditing(true)}
-                className="rounded-xl border-2 border-yellow-400 bg-yellow-400 px-5 py-2 font-bold text-black transition hover:bg-orange-500"
-              >
-                Modifier le profil
-              </button>
-              <button
-                onClick={logout}
-                className="rounded-xl border-2 border-gray-300 px-5 py-2 font-bold text-gray-700 transition hover:bg-gray-100"
-              >
-                Se déconnecter
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Prénom" value={form.first_name} onChange={v => setForm(f => ({ ...f, first_name: v }))} />
-              <Field label="Nom" value={form.last_name} onChange={v => setForm(f => ({ ...f, last_name: v }))} />
-            </div>
-            <Field label="Bio" value={form.bio} onChange={v => setForm(f => ({ ...f, bio: v }))} multiline />
-            <Field label="URL avatar" value={form.avatar_url} onChange={v => setForm(f => ({ ...f, avatar_url: v }))} />
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="rounded-xl border-2 border-yellow-400 bg-yellow-400 px-5 py-2 font-bold text-black transition hover:bg-orange-500 disabled:bg-gray-200"
-              >
-                {saving ? "Enregistrement..." : "Enregistrer"}
-              </button>
-              <button
-                onClick={() => setEditing(false)}
-                className="rounded-xl border-2 border-gray-300 px-5 py-2 font-bold text-gray-700 transition hover:bg-gray-100"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xl font-black text-[var(--ink)]">{displayName}</p>
+          <p className="text-sm text-[var(--ink-3)]">{user?.email}</p>
+          {user?.bio && !editing && (
+            <p className="mt-1 text-sm text-[var(--ink-2)]">{user.bio}</p>
+          )}
+          {user?.created_at && (
+            <p className="mt-1 text-xs text-[var(--ink-3)]">
+              Membre depuis {new Date(user.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+            </p>
+          )}
+        </div>
+
+        {!editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--line)] px-3 py-2 text-sm font-semibold text-[var(--ink-2)] transition hover:border-brand-500 hover:text-brand-500"
+          >
+            <Pencil size={13} /> Modifier
+          </button>
         )}
       </div>
 
-      {/* Changer le mot de passe */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-        <h2 className="mb-4 text-xl font-black uppercase text-black">Changer le mot de passe</h2>
-        {pwError && <div className="mb-3 border-l-4 border-red-500 bg-red-50 p-3 text-sm text-red-700">{pwError}</div>}
-        {pwSuccess && <div className="mb-3 border-l-4 border-green-500 bg-green-50 p-3 text-sm text-green-700">{pwSuccess}</div>}
-        <form onSubmit={handleChangePassword} className="flex flex-col gap-4 sm:max-w-md">
-          <Field
-            label="Nouveau mot de passe"
-            value={pwForm.new_password}
-            onChange={v => setPwForm(f => ({ ...f, new_password: v }))}
-            type="password"
-          />
-          <Field
-            label="Confirmer le mot de passe"
-            value={pwForm.confirm}
-            onChange={v => setPwForm(f => ({ ...f, confirm: v }))}
-            type="password"
-          />
+      {/* ── Formulaire d'édition ────────────────────────────── */}
+      {editing && (
+        <div className="mb-4 rounded-2xl border border-brand-500/30 bg-[var(--surface)] p-6 shadow-card">
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-[var(--ink-3)]">Modifier le profil</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nom d'utilisateur" value={form.username}   onChange={v => setForm(f => ({ ...f, username: v }))} />
+            <Field label="Prénom"             value={form.first_name} onChange={v => setForm(f => ({ ...f, first_name: v }))} />
+            <Field label="Nom"                value={form.last_name}  onChange={v => setForm(f => ({ ...f, last_name: v }))} />
+            <Field label="URL avatar"         value={form.avatar_url} onChange={v => setForm(f => ({ ...f, avatar_url: v }))} placeholder="https://…" />
+            <div className="sm:col-span-2">
+              <Field label="Bio" value={form.bio} onChange={v => setForm(f => ({ ...f, bio: v }))} multiline />
+            </div>
+          </div>
+          <div className="mt-5 flex gap-2">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-1.5 rounded-xl bg-brand-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-40"
+            >
+              <Check size={14} />{saving ? "Enregistrement…" : "Enregistrer"}
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              className="flex items-center gap-1.5 rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--ink-2)] transition hover:bg-[var(--surface-3)]"
+            >
+              <X size={14} />Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Changer le mot de passe ─────────────────────────── */}
+      <div className="mb-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-card">
+        <h2 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[var(--ink-3)]">
+          <Lock size={14} /> Mot de passe
+        </h2>
+        {pwError && (
+          <p className="mb-3 rounded-xl bg-red-50 p-3 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">{pwError}</p>
+        )}
+        <form onSubmit={handleChangePassword} className="flex flex-col gap-3 sm:max-w-sm">
+          <Field label="Nouveau mot de passe" value={pwForm.new_password}
+            onChange={v => setPwForm(f => ({ ...f, new_password: v }))} type="password" />
+          <Field label="Confirmer" value={pwForm.confirm}
+            onChange={v => setPwForm(f => ({ ...f, confirm: v }))} type="password" />
           <button
             type="submit"
             disabled={pwLoading || !pwForm.new_password}
-            className="w-fit rounded-xl border-2 border-yellow-400 bg-yellow-400 px-5 py-2 font-bold text-black transition hover:bg-orange-500 disabled:bg-gray-200"
+            className="w-fit rounded-xl bg-brand-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-40"
           >
-            {pwLoading ? "Modification..." : "Modifier le mot de passe"}
+            {pwLoading ? "Modification…" : "Modifier le mot de passe"}
           </button>
         </form>
       </div>
-    </div>
-  );
-}
 
-function InfoRow({ label, value, className = "" }: { label: string; value?: string | null; className?: string }) {
-  return (
-    <div className={className}>
-      <dt className="text-xs font-bold uppercase tracking-wider text-gray-400">{label}</dt>
-      <dd className="mt-1 text-black">{value || <span className="italic text-gray-400">—</span>}</dd>
+      {/* ── Déconnexion ─────────────────────────────────────── */}
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-card">
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-[var(--ink-3)]">Session</h2>
+        <button
+          onClick={logout}
+          className="flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-500 transition hover:border-red-400 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20"
+        >
+          <LogOut size={14} /> Se déconnecter
+        </button>
+      </div>
     </div>
   );
 }
 
 function Field({
-  label, value, onChange, multiline, type = "text",
+  label, value, onChange, multiline, type = "text", placeholder,
 }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  multiline?: boolean;
-  type?: string;
+  label: string; value: string; onChange: (v: string) => void;
+  multiline?: boolean; type?: string; placeholder?: string;
 }) {
-  const cls = "w-full rounded-xl border-2 border-yellow-400 px-3 py-2 text-black focus:border-yellow-500 focus:outline-none";
+  const cls = "w-full rounded-xl border-2 border-[var(--line)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-3)] focus:border-brand-500 focus:outline-none transition";
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-black">{label}</label>
-      {multiline ? (
-        <textarea value={value} onChange={e => onChange(e.target.value)} className={`${cls} min-h-20`} />
-      ) : (
-        <input type={type} value={value} onChange={e => onChange(e.target.value)} className={cls} />
-      )}
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-bold text-[var(--ink-2)]">{label}</label>
+      {multiline
+        ? <textarea value={value} onChange={e => onChange(e.target.value)} rows={3} className={`${cls} resize-none`} placeholder={placeholder} />
+        : <input type={type} value={value} onChange={e => onChange(e.target.value)} className={cls} placeholder={placeholder} />
+      }
     </div>
   );
 }

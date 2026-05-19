@@ -4,12 +4,18 @@ import { useEffect, useRef } from "react";
 import { AUTH_TOKEN_STORAGE_KEY } from "@/lib/api/client";
 import type { Card } from "@/lib/models/Card";
 import type { List } from "@/lib/models/List";
+import type { Comment } from "@/lib/models/Comment";
+import type { BoardMember } from "@/lib/models/BoardMember";
 
 type WsEvent =
   | { type: "card_created" | "card_updated" | "card_moved"; data: Card }
   | { type: "card_deleted"; data: { card_id: number } }
   | { type: "list_created" | "list_updated" | "list_moved"; data: List }
-  | { type: "list_deleted"; data: { list_id: number } };
+  | { type: "list_deleted"; data: { list_id: number } }
+  | { type: "comment_created" | "comment_updated"; data: Comment }
+  | { type: "comment_deleted"; data: { comment_id: number; card_id: number } }
+  | { type: "member_added" | "member_updated"; data: BoardMember }
+  | { type: "member_removed"; data: { member_id: number } };
 
 interface Options {
   onCardCreated?: (card: Card) => void;
@@ -20,6 +26,12 @@ interface Options {
   onListUpdated?: (list: List) => void;
   onListDeleted?: (listId: number) => void;
   onListMoved?: (list: List) => void;
+  onCommentCreated?: (comment: Comment) => void;
+  onCommentUpdated?: (comment: Comment) => void;
+  onCommentDeleted?: (commentId: number, cardId: number) => void;
+  onMemberAdded?: (member: BoardMember) => void;
+  onMemberUpdated?: (member: BoardMember) => void;
+  onMemberRemoved?: (memberId: number) => void;
   enabled?: boolean;
 }
 
@@ -57,17 +69,25 @@ export function useBoardWebSocket(boardId: number, options: Options = {}) {
           const {
             onCardCreated, onCardUpdated, onCardDeleted, onCardMoved,
             onListCreated, onListUpdated, onListDeleted, onListMoved,
+            onCommentCreated, onCommentUpdated, onCommentDeleted,
+            onMemberAdded, onMemberUpdated, onMemberRemoved,
           } = optionsRef.current;
 
           switch (msg.type) {
-            case "card_created": onCardCreated?.(msg.data); break;
-            case "card_updated": onCardUpdated?.(msg.data); break;
-            case "card_deleted": onCardDeleted?.(msg.data.card_id); break;
-            case "card_moved":   onCardMoved?.(msg.data); break;
-            case "list_created": onListCreated?.(msg.data); break;
-            case "list_updated": onListUpdated?.(msg.data); break;
-            case "list_deleted": onListDeleted?.(msg.data.list_id); break;
-            case "list_moved":   onListMoved?.(msg.data); break;
+            case "card_created":    onCardCreated?.(msg.data); break;
+            case "card_updated":    onCardUpdated?.(msg.data); break;
+            case "card_deleted":    onCardDeleted?.(msg.data.card_id); break;
+            case "card_moved":      onCardMoved?.(msg.data); break;
+            case "list_created":    onListCreated?.(msg.data); break;
+            case "list_updated":    onListUpdated?.(msg.data); break;
+            case "list_deleted":    onListDeleted?.(msg.data.list_id); break;
+            case "list_moved":      onListMoved?.(msg.data); break;
+            case "comment_created": onCommentCreated?.(msg.data); break;
+            case "comment_updated": onCommentUpdated?.(msg.data); break;
+            case "comment_deleted": onCommentDeleted?.(msg.data.comment_id, msg.data.card_id); break;
+            case "member_added":    onMemberAdded?.(msg.data); break;
+            case "member_updated":  onMemberUpdated?.(msg.data); break;
+            case "member_removed":  onMemberRemoved?.(msg.data.member_id); break;
           }
         } catch {
           // ignore malformed messages

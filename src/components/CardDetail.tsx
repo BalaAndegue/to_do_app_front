@@ -618,7 +618,7 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
                         <span className="text-xs text-[var(--ink-3)]">
                           {c.created_at ? new Date(c.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                         </span>
-                        {c.is_edited === "true" && <span className="text-xs italic text-[var(--ink-3)]">modifié</span>}
+                        {c.is_edited && <span className="text-xs italic text-[var(--ink-3)]">modifié</span>}
                       </div>
                       {editingCommentId === c.comment_id ? (
                         <div className="mt-1 flex flex-col gap-2">

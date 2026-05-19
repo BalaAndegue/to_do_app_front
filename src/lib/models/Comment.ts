@@ -11,6 +11,6 @@ export type Comment = {
     content: string;
     readonly created_at?: string;
     readonly updated_at?: string;
-    readonly is_edited?: string;
+    readonly is_edited?: boolean;
 };
 

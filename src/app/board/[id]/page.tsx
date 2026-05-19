@@ -236,6 +236,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     onListUpdated: () => fetchLists(),
     onListDeleted: () => fetchLists(),
     onListMoved:   () => fetchLists(),
+    onMemberAdded:   (m) => setMembers(prev => prev.some(x => x.id === m.id) ? prev : [...prev, m]),
+    onMemberUpdated: (m) => setMembers(prev => prev.map(x => x.id === m.id ? m : x)),
+    onMemberRemoved: (id) => setMembers(prev => prev.filter(x => x.id !== id)),
   });
 
   // ── Drag & Drop ───────────────────────────────────────────────

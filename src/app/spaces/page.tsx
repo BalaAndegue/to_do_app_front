@@ -152,6 +152,15 @@ export default function SpacesPage() {
                   <option value="color">Couleur</option>
                   <option value="image">Image URL</option>
                 </select>
+                {form.background_type === "color" && (
+                  <input
+                    type="color"
+                    value={form.background_value.startsWith("#") ? form.background_value : "#1e3a5f"}
+                    onChange={e => setForm(f => ({ ...f, background_value: e.target.value }))}
+                    className="h-10 w-10 shrink-0 cursor-pointer rounded-xl border-2 border-[var(--line)] bg-[var(--surface)] p-0.5"
+                    title="Choisir une couleur"
+                  />
+                )}
                 <input
                   value={form.background_value}
                   onChange={e => setForm(f => ({ ...f, background_value: e.target.value }))}
@@ -293,9 +302,22 @@ function BoardCard({ board, onClose, onReopen, archived = false }: {
             </span>
           )}
           {board.members && board.members.length > 0 && (
-            <span className="flex items-center gap-1">
-              <Users size={12} /> {board.members.length} membre{board.members.length > 1 ? "s" : ""}
-            </span>
+            <div className="flex -space-x-2">
+              {board.members.slice(0, 5).map(m => (
+                <div
+                  key={m.id}
+                  title={m.user_details?.username ?? `#${m.user}`}
+                  className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-brand-500 text-[9px] font-black text-white"
+                >
+                  {(m.user_details?.username ?? "?")[0].toUpperCase()}
+                </div>
+              ))}
+              {board.members.length > 5 && (
+                <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--surface-3)] text-[9px] font-bold text-[var(--ink-3)]">
+                  +{board.members.length - 5}
+                </div>
+              )}
+            </div>
           )}
           {board.created_at && (
             <span className="ml-auto">

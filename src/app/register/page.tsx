@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RegisterService } from "@/lib";
 import { useRouter } from "next/navigation";
 import { normalizeApiError, extractFieldErrors } from "@/lib/api/client";
+import { useAuth } from "@/components/AuthContext";
 import { uiImages } from "@/lib/ui-images";
 
 export default function Register() {
@@ -14,6 +15,7 @@ export default function Register() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { loginWithUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -22,12 +24,9 @@ export default function Register() {
     setFieldErrors({});
 
     try {
-      await RegisterService.registerCreate({
-        username: name,
-        email,
-        password
-      });
-      router.push("/login");
+      const res = await RegisterService.registerCreate({ username: name, email, password });
+      loginWithUser(res.token, res.user);
+      router.push("/spaces");
     } catch (err: unknown) {
       setError(normalizeApiError(err));
       setFieldErrors(extractFieldErrors(err));

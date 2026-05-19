@@ -6,7 +6,7 @@ import { request as __request } from '../core/request';
 export type PaginatedUsers = { count: number; next: string | null; previous: string | null; results: User[] };
 
 export class UsersService {
-    public static usersList(params?: { page?: number }): CancelablePromise<PaginatedUsers> {
+    public static usersList(params?: { page?: number; search?: string }): CancelablePromise<PaginatedUsers> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/users/',
@@ -18,6 +18,14 @@ export class UsersService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/users/me/',
+        });
+    }
+
+    public static usersUpdateMe(data: Partial<Pick<User, 'username' | 'first_name' | 'last_name' | 'bio' | 'avatar_url'>>): CancelablePromise<User> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/users/me/',
+            body: data,
         });
     }
 

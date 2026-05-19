@@ -10,6 +10,7 @@ interface AuthContextType {
     token: string | null;
     user: User | null;
     login: (token: string) => void;
+    loginWithUser: (token: string, user: User) => void;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
     isAuthenticated: boolean;
@@ -49,8 +50,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, newToken);
         setToken(newToken);
         configureOpenApiClient(newToken);
-        // Fetch user profile right after login
         UsersService.usersMe().then(setUser).catch(() => setUser(null));
+    };
+
+    const loginWithUser = (newToken: string, newUser: User) => {
+        localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, newToken);
+        setToken(newToken);
+        setUser(newUser);
+        configureOpenApiClient(newToken);
     };
 
     const refreshUser = async () => {
@@ -72,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ token, user, login, logout, refreshUser, isAuthenticated: !!token, loading }}>
+        <AuthContext.Provider value={{ token, user, login, loginWithUser, logout, refreshUser, isAuthenticated: !!token, loading }}>
             {children}
         </AuthContext.Provider>
     );

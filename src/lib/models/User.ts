@@ -11,6 +11,6 @@ export type User = {
     bio?: string | null;
     avatar_url?: string | null;
     readonly created_at?: string;
-    password: string;
+    password?: string;
 };
 
