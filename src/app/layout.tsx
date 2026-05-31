@@ -81,11 +81,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
   const navLinks = mounted && isAuthenticated ? NAV_AUTH : NAV_PUBLIC;
   const initials = user?.username?.substring(0, 2).toUpperCase() ?? "U";
+  const isBoardPage = pathname.startsWith("/board/");
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/95 shadow-sm backdrop-blur-md transition-colors duration-200">
+      {/* ── Header — hidden on board pages (board has its own nav bar) ── */}
+      {!isBoardPage && <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/95 shadow-sm backdrop-blur-md transition-colors duration-200">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 font-black text-xl tracking-tight text-[var(--ink)]">
@@ -201,7 +202,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
         )}
-      </header>
+      </header>}
 
       {/* ── Page content ──────────────────────────────────── */}
       <main className="flex-1 w-full">{children}</main>

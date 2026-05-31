@@ -1,7 +1,8 @@
 "use client";
 
 import { use, useCallback, useEffect, useRef, useState } from "react";
-import { UserPlus, Lock, LockOpen, X, Globe, Plus } from "lucide-react";
+import Link from "next/link";
+import { UserPlus, Lock, LockOpen, X, Globe, Plus, ChevronLeft } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, KeyboardSensor,
   useSensor, useSensors, closestCorners,
@@ -368,6 +369,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     <div className="flex min-h-screen flex-col" style={bgStyle}>
       {/* ── Board header bar ─────────────────────────────────── */}
       <div className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-black/25 px-4 py-2.5 backdrop-blur-sm">
+        {/* Back to spaces */}
+        <Link
+          href="/spaces"
+          className="mr-1 flex shrink-0 items-center gap-1 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-semibold text-white/90 transition hover:bg-white/25"
+        >
+          <ChevronLeft size={14} />
+          <span className="hidden sm:inline">Tableaux</span>
+        </Link>
+
         {/* Board name + status */}
         <div className="mr-auto flex min-w-0 items-center gap-2">
           {boardLoading ? (
