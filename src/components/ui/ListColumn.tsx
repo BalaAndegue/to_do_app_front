@@ -82,8 +82,9 @@ export default function ListColumn({
   const [inlineEditDraft, setInlineEditDraft] = useState("");
   const inlineInputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Card context menu
-  const [cardMenuId, setCardMenuId]         = useState<number | null>(null);
+  // Card context menu — fixed positioning to escape overflow-y-auto clipping
+  const [cardMenuId, setCardMenuId]   = useState<number | null>(null);
+  const [cardMenuPos, setCardMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const cardMenuRef = useRef<HTMLDivElement>(null);
 
   // Local sort
@@ -358,9 +359,15 @@ export default function ListColumn({
               onInlineChange={setInlineEditDraft}
               onInlineSave={() => handleSaveInlineTitle(card.card_id!)}
               onInlineCancel={() => setInlineEditId(null)}
-              isMenuOpen={cardMenuId === card.card_id}
-              cardMenuRef={cardMenuId === card.card_id ? cardMenuRef : undefined}
-              onMenuToggle={(id) => setCardMenuId(prev => prev === id ? null : id)}
+              onMenuToggle={(id, rect) => {
+                if (cardMenuId === id) { setCardMenuId(null); return; }
+                setCardMenuId(id);
+                const menuW = 208;
+                setCardMenuPos({
+                  top: rect.bottom + 4,
+                  left: Math.max(8, rect.right - menuW),
+                });
+              }}
               onAction={(action) => handleCardAction(card.card_id!, action)}
               onClick={() => { setDefaultPanel(undefined); setSelectedCardId(card.card_id ?? null); }}
             />
@@ -403,6 +410,36 @@ export default function ListColumn({
         )}
       </div>
 
+      {/* ── Card context menu — fixed, escapes overflow clipping ── */}
+      {cardMenuId !== null && (() => {
+        const action = (a: string) => handleCardAction(cardMenuId, a);
+        return (
+          <div
+            ref={cardMenuRef}
+            style={{ position: "fixed", top: cardMenuPos.top, left: cardMenuPos.left, zIndex: 9999 }}
+            className="w-52 rounded-xl border border-[var(--line)] bg-[var(--surface)] py-1 shadow-card-lg"
+            onClick={e => e.stopPropagation()}
+          >
+            <CardMenuItem icon={<ArrowRight size={13}/>} label="Ouvrir la carte"        onClick={() => action("open")} />
+            <div className="my-1 border-t border-[var(--line)]" />
+            <CardMenuItem icon={<Pencil size={13}/>}    label="Renommer"                onClick={() => action("rename")} />
+            <CardMenuItem icon={<Tag size={13}/>}       label="Modifier les étiquettes" onClick={() => action("labels")} />
+            <CardMenuItem icon={<Users size={13}/>}     label="Modifier les membres"    onClick={() => action("members")} />
+            <CardMenuItem icon={<Clock size={13}/>}     label="Modifier les dates"      onClick={() => action("dates")} />
+            <CardMenuItem icon={<CheckSquare size={13}/>} label="Checklist"             onClick={() => action("checklist")} />
+            <div className="my-1 border-t border-[var(--line)]" />
+            <CardMenuItem icon={<ArrowRight size={13}/>} label="Déplacer"               onClick={() => action("open")} />
+            <CardMenuItem icon={<Copy size={13}/>}      label="Copier la carte"         onClick={() => action("copy")} />
+            <CardMenuItem icon={<LinkIcon size={13}/>}  label="Copier le lien"          onClick={() => action("link")} />
+            <div className="my-1 border-t border-[var(--line)]" />
+            <button onClick={() => action("archive")}
+              className="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-orange-600 transition hover:bg-orange-50 dark:hover:bg-orange-900/20">
+              <Archive size={13} />Archiver
+            </button>
+          </div>
+        );
+      })()}
+
       {/* ── Card detail modal ──────────────────────── */}
       {selectedCardId !== null && (
         <CardDetail
@@ -438,9 +475,7 @@ interface SortableCardProps {
   onInlineChange: (v: string) => void;
   onInlineSave: () => void;
   onInlineCancel: () => void;
-  isMenuOpen: boolean;
-  cardMenuRef?: React.RefObject<HTMLDivElement | null>;
-  onMenuToggle: (id: number) => void;
+  onMenuToggle: (id: number, rect: DOMRect) => void;
   onAction: (action: string) => void;
   onClick: () => void;
 }
@@ -448,7 +483,7 @@ interface SortableCardProps {
 function SortableCard({
   card, accent,
   isInlineEditing, inlineEditDraft, inlineInputRef, onInlineChange, onInlineSave, onInlineCancel,
-  isMenuOpen, cardMenuRef, onMenuToggle, onAction, onClick,
+  onMenuToggle, onClick,
 }: SortableCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `card-${card.card_id}` });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
@@ -477,35 +512,15 @@ function SortableCard({
         className="absolute right-1 top-1 z-10 opacity-0 group-hover:opacity-100 transition"
         onClick={e => e.stopPropagation()}
       >
-        <div className="relative" ref={isMenuOpen ? cardMenuRef : undefined}>
-          <button
-            onClick={e => { e.stopPropagation(); onMenuToggle(card.card_id!); }}
-            className="flex h-6 w-6 items-center justify-center rounded bg-[var(--surface-3)] text-[var(--ink-2)] shadow-sm transition hover:bg-brand-500 hover:text-white"
-          >
-            <Pencil size={11} />
-          </button>
-
-          {isMenuOpen && (
-            <div className="absolute right-0 top-7 z-50 w-52 rounded-xl border border-[var(--line)] bg-[var(--surface)] py-1 shadow-card-lg">
-              <CardMenuItem icon={<ArrowRight size={13}/>} label="Ouvrir la carte"          onClick={() => onAction("open")} />
-              <div className="my-1 border-t border-[var(--line)]" />
-              <CardMenuItem icon={<Pencil size={13}/>}    label="Renommer"                  onClick={() => onAction("rename")} />
-              <CardMenuItem icon={<Tag size={13}/>}       label="Modifier les étiquettes"   onClick={() => onAction("labels")} />
-              <CardMenuItem icon={<Users size={13}/>}     label="Modifier les membres"      onClick={() => onAction("members")} />
-              <CardMenuItem icon={<Clock size={13}/>}     label="Modifier les dates"        onClick={() => onAction("dates")} />
-              <CardMenuItem icon={<CheckSquare size={13}/>} label="Checklist"               onClick={() => onAction("checklist")} />
-              <div className="my-1 border-t border-[var(--line)]" />
-              <CardMenuItem icon={<ArrowRight size={13}/>} label="Déplacer"                 onClick={() => onAction("open")} />
-              <CardMenuItem icon={<Copy size={13}/>}      label="Copier la carte"           onClick={() => onAction("copy")} />
-              <CardMenuItem icon={<LinkIcon size={13}/>}  label="Copier le lien"            onClick={() => onAction("link")} />
-              <div className="my-1 border-t border-[var(--line)]" />
-              <button onClick={() => onAction("archive")}
-                className="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-orange-600 transition hover:bg-orange-50 dark:hover:bg-orange-900/20">
-                <Archive size={13} />Archiver
-              </button>
-            </div>
-          )}
-        </div>
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            onMenuToggle(card.card_id!, e.currentTarget.getBoundingClientRect());
+          }}
+          className="flex h-6 w-6 items-center justify-center rounded bg-[var(--surface-3)] text-[var(--ink-2)] shadow-sm transition hover:bg-brand-500 hover:text-white"
+        >
+          <Pencil size={11} />
+        </button>
       </div>
 
       {/* ── Click zone → open modal ──────────────── */}
