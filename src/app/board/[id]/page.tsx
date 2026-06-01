@@ -80,7 +80,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   // ── Card state helpers ────────────────────────────────────────
   const handleCardCreated = useCallback((listId: number, card: Card) => {
-    setCardsByList(prev => ({ ...prev, [listId]: [...(prev[listId] ?? []), card] }));
+    setCardsByList(prev => {
+      const existing = prev[listId] ?? [];
+      if (existing.some(c => c.card_id === card.card_id)) return prev;
+      return { ...prev, [listId]: [...existing, card] };
+    });
   }, []);
 
   const handleCardUpdated = useCallback((listId: number, card: Card) => {
