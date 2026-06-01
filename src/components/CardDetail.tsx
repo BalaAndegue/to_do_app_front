@@ -73,6 +73,12 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
   const [newItemName, setNewItemName]           = useState<Record<number, string>>({});
 
   // Sidebar panels
+  // Label creation
+  const [addingLabel, setAddingLabel]       = useState(false);
+  const [newLabelName, setNewLabelName]     = useState("");
+  const [newLabelColor, setNewLabelColor]   = useState("#3b82f6");
+  const [labelCreating, setLabelCreating]   = useState(false);
+
   const [openPanel, setOpenPanel] = useState<"labels" | "members" | "dates" | "checklist" | "attachments" | null>(
     defaultPanel ?? null,
   );
@@ -278,6 +284,37 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
       const created = await CardLabelsService.cardLabelsCreate({ card: cardId, label: label.label_id! } as CardLabel);
       setCard(prev => prev ? { ...prev, labels: [...(prev.labels ?? []), created] } : prev);
     }
+  };
+
+  const createLabel = async () => {
+    if (!newLabelColor) return;
+    setLabelCreating(true);
+    try {
+      const label = await LabelsService.labelsCreate({
+        board: boardId,
+        name: newLabelName.trim() || newLabelColor,
+        color: newLabelColor,
+      });
+      setBoardLabels(prev => [...prev, label]);
+      // Auto-apply the new label to the card
+      const created = await CardLabelsService.cardLabelsCreate({ card: cardId, label: label.label_id! } as CardLabel);
+      setCard(prev => prev ? { ...prev, labels: [...(prev.labels ?? []), created] } : prev);
+      setAddingLabel(false);
+      setNewLabelName("");
+      setNewLabelColor("#3b82f6");
+    } catch { /* ignore */ } finally { setLabelCreating(false); }
+  };
+
+  const deleteLabel = async (label: Label) => {
+    if (!confirm(`Supprimer le label "${label.name || label.color}" du tableau ?`)) return;
+    try {
+      await LabelsService.labelsDelete(label.label_id!);
+      setBoardLabels(prev => prev.filter(l => l.label_id !== label.label_id));
+      setCard(prev => prev ? {
+        ...prev,
+        labels: prev.labels?.filter(cl => cl.label !== label.label_id),
+      } : prev);
+    } catch { /* ignore */ }
   };
 
   // ── Membres ──────────────────────────────────────────────────
@@ -738,17 +775,98 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
             <SideAction icon={<Tag size={14} />} label="Labels"
               active={openPanel === "labels"} onClick={() => setOpenPanel(p => p === "labels" ? null : "labels")} />
             {openPanel === "labels" && (
-              <div className="flex flex-col gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface-3)] p-2">
-                {boardLabels.length === 0 && <p className="text-xs text-[var(--ink-3)]">Aucun label sur ce board.</p>}
-                {boardLabels.map(label => (
-                  <button key={label.label_id} onClick={() => toggleLabel(label)}
-                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold transition hover:opacity-80"
-                    style={{ backgroundColor: (label.color ?? "#888") + "22", color: label.color ?? "#888" }}>
-                    <span className="h-3 w-3 flex-shrink-0 rounded-full" style={{ backgroundColor: label.color }} />
-                    <span className="flex-1 truncate">{label.name || label.color}</span>
-                    {label.label_id != null && appliedLabelIds.has(label.label_id) && <Check size={12} />}
+              <div className="flex flex-col gap-1.5 rounded-xl border border-[var(--line)] bg-[var(--surface-3)] p-2">
+                {boardLabels.length === 0 && !addingLabel && (
+                  <p className="px-1 text-xs text-[var(--ink-3)]">Aucun label sur ce tableau.</p>
+                )}
+
+                {/* Existing labels */}
+                {boardLabels.map(label => {
+                  const applied = label.label_id != null && appliedLabelIds.has(label.label_id);
+                  return (
+                    <div key={label.label_id} className="flex items-center gap-1">
+                      <button
+                        onClick={() => toggleLabel(label)}
+                        className={`flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold transition ${
+                          applied ? "ring-2 ring-inset" : "hover:opacity-80"
+                        }`}
+                        style={{
+                          backgroundColor: (label.color ?? "#888") + "33",
+                          color: label.color ?? "#888",
+                        }}
+                      >
+                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: label.color }} />
+                        <span className="flex-1 truncate">{label.name || label.color}</span>
+                        {applied && <Check size={11} />}
+                      </button>
+                      <button
+                        onClick={() => deleteLabel(label)}
+                        className="shrink-0 rounded p-1 text-[var(--ink-3)] transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                        title="Supprimer ce label"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* Create label form */}
+                {addingLabel ? (
+                  <div className="mt-1 flex flex-col gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-2">
+                    {/* Color palette */}
+                    <div className="flex flex-wrap gap-1">
+                      {["#ef4444","#f97316","#f59e0b","#84cc16","#22c55e","#06b6d4",
+                        "#3b82f6","#8b5cf6","#ec4899","#64748b","#0f172a"].map(c => (
+                        <button
+                          key={c}
+                          onClick={() => setNewLabelColor(c)}
+                          className={`h-5 w-5 rounded-full transition hover:scale-110 ${newLabelColor === c ? "ring-2 ring-offset-1 ring-[var(--ink)]" : ""}`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                      <input
+                        type="color"
+                        value={newLabelColor}
+                        onChange={e => setNewLabelColor(e.target.value)}
+                        className="h-5 w-5 cursor-pointer rounded-full border-0 bg-transparent p-0"
+                        title="Couleur personnalisée"
+                      />
+                    </div>
+                    {/* Name input */}
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Nom du label (optionnel)"
+                      value={newLabelName}
+                      onChange={e => setNewLabelName(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") createLabel(); if (e.key === "Escape") setAddingLabel(false); }}
+                      className="rounded-lg border border-[var(--line)] bg-[var(--surface-3)] px-2 py-1 text-xs text-[var(--ink)] placeholder:text-[var(--ink-3)] focus:border-brand-500 focus:outline-none"
+                    />
+                    {/* Preview + actions */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="flex flex-1 items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-white"
+                        style={{ backgroundColor: newLabelColor }}>
+                        <span className="h-2.5 w-2.5 rounded-full bg-white/40" />
+                        {newLabelName || "Aperçu"}
+                      </span>
+                      <button onClick={createLabel} disabled={labelCreating}
+                        className="rounded-lg bg-brand-500 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-brand-600 disabled:opacity-40">
+                        {labelCreating ? "…" : "Créer"}
+                      </button>
+                      <button onClick={() => { setAddingLabel(false); setNewLabelName(""); }}
+                        className="rounded-lg border border-[var(--line)] px-2 py-1 text-xs text-[var(--ink-2)] hover:bg-[var(--surface-3)]">
+                        <X size={11} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setAddingLabel(true)}
+                    className="mt-0.5 flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--ink-2)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
+                  >
+                    <Plus size={12} /> Créer un label
                   </button>
-                ))}
+                )}
               </div>
             )}
 
