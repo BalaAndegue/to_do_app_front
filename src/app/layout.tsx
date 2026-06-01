@@ -6,6 +6,7 @@ import { Sun, Moon, Menu, X } from "lucide-react";
 import "./globals.css";
 import { AuthProvider, useAuth } from "@/components/AuthContext";
 import CookieConsent from "@/components/CookieConsent";
+import PolicyConsent from "@/components/PolicyConsent";
 import Tooltip from "@/components/Tooltip";
 import { ToastProvider } from "@/components/ToastContext";
 
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <ToastProvider>
             <AppShell>{children}</AppShell>
+            <PolicyConsent />
             <CookieConsent />
           </ToastProvider>
         </AuthProvider>

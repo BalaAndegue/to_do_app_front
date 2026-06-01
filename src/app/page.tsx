@@ -32,6 +32,15 @@ function SR({ children, delay = 0, className = "" }: { children: ReactNode; dela
   );
 }
 
+function MiniCard({ title, color, active, done }: { title: string; color: string; active?: boolean; done?: boolean }) {
+  return (
+    <div className={`rounded-lg border bg-[var(--surface-2)] px-2 py-1.5 ${active ? "border-brand-300 dark:border-brand-700" : "border-[var(--line)]"}`}>
+      <div className="mb-1 h-1 w-8 rounded-full" style={{ backgroundColor: color }} />
+      <p className={`text-[10px] font-medium leading-tight ${done ? "text-[var(--ink-3)] line-through" : "text-[var(--ink)]"}`}>{title}</p>
+    </div>
+  );
+}
+
 /* ── Marketplace data ──────────────────────────────────── */
 type MItem = { Icon: LucideIcon; title: string; desc: string; tag: string; href: string; accent: string; iconCls: string };
 
@@ -107,63 +116,55 @@ export default function Home() {
             </SR>
           </div>
 
-          {/* Right — image stack pro */}
-          <div className="relative hidden md:flex items-center justify-center">
-            {/* Card arriere — tournee */}
-            <div
-              className="absolute right-0 top-4 h-[75%] w-[68%] -rotate-6 overflow-hidden rounded-[28px] border border-[var(--line)] shadow-card-lg"
-              style={{
-                backgroundImage: `linear-gradient(rgba(15,23,42,.55),rgba(15,23,42,.55)),url(${uiImages.spaceCard1})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            />
+          {/* Right — Kanban board mockup */}
+          <div className="hidden md:flex items-center justify-center">
+            <div className="w-full max-w-[460px] rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-3 shadow-card-lg">
 
-            {/* Card milieu */}
-            <div
-              className="absolute left-4 top-8 h-[72%] w-[65%] rotate-3 overflow-hidden rounded-[28px] border border-[var(--line)] shadow-card-lg"
-              style={{
-                backgroundImage: `linear-gradient(rgba(15,23,42,.45),rgba(15,23,42,.45)),url(${uiImages.spaceCard2})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            />
-
-            {/* Card principale — devant */}
-            <div className="relative z-10 w-[80%] overflow-hidden rounded-[32px] border border-[var(--line)] bg-[var(--surface)] shadow-card-lg">
-              <div
-                className="animated-media-frame h-48"
-                style={
-                  {
-                    "--frame-image": `url(${uiImages.heroWorkspace})`,
-                    "--frame-overlay": "linear-gradient(145deg,rgba(15,23,42,.75) 0%,rgba(15,23,42,.5) 55%,rgba(245,158,11,.4) 130%)",
-                  } as CSSProperties
-                }
-              >
-                <div className="relative z-10 flex h-full flex-col justify-end p-5 text-white">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-300">Workspace actif</p>
-                  <h3 className="mt-1 text-lg font-black">Sprint Produit Q2</h3>
+              {/* Board header */}
+              <div className="mb-3 flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-brand-500 animate-pulse-soft" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-[var(--ink-2)]">Sprint Produit Q2</span>
+                </div>
+                <div className="flex -space-x-1.5">
+                  {["A","B","C"].map(l => (
+                    <div key={l} className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-[9px] font-black text-white ring-2 ring-[var(--surface-2)]">{l}</div>
+                  ))}
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface-3)] text-[9px] font-bold text-[var(--ink-3)] ring-2 ring-[var(--surface-2)]">+5</div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 p-4">
-                {[["Backlog","bg-slate-100 dark:bg-slate-700","text-slate-700 dark:text-slate-200"],
-                  ["En cours","bg-brand-100 dark:bg-brand-700/30","text-brand-700 dark:text-brand-300"],
-                  ["Termine","bg-green-100 dark:bg-green-900/30","text-green-700 dark:text-green-400"]].map(([l,bg,tc]) => (
-                  <div key={l} className={`rounded-xl ${bg} ${tc} px-3 py-2 text-xs font-bold`}>{l}</div>
-                ))}
+
+              {/* Columns */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* À faire */}
+                <div className="flex flex-col gap-1.5 rounded-xl bg-[var(--surface)] p-2">
+                  <p className="px-1 text-[10px] font-bold uppercase tracking-wide text-[var(--ink-3)]">À faire <span className="ml-0.5 text-[var(--ink-3)]">3</span></p>
+                  <MiniCard title="Auth OAuth" color="#8b5cf6" />
+                  <MiniCard title="Dashboard v2" color="#3b82f6" />
+                  <MiniCard title="Export PDF" color="#f59e0b" />
+                </div>
+
+                {/* En cours */}
+                <div className="flex flex-col gap-1.5 rounded-xl bg-[var(--surface)] p-2">
+                  <p className="px-1 text-[10px] font-bold uppercase tracking-wide text-brand-600 dark:text-brand-400">En cours <span>2</span></p>
+                  <MiniCard title="API Rest v3" color="#10b981" active />
+                  <MiniCard title="Notifications" color="#ec4899" active />
+                </div>
+
+                {/* Terminé */}
+                <div className="flex flex-col gap-1.5 rounded-xl bg-[var(--surface)] p-2">
+                  <p className="px-1 text-[10px] font-bold uppercase tracking-wide text-green-600 dark:text-green-400">Terminé <span>4</span></p>
+                  <MiniCard title="Setup CI/CD" color="#10b981" done />
+                  <MiniCard title="Design system" color="#8b5cf6" done />
+                  <MiniCard title="Auth JWT" color="#3b82f6" done />
+                </div>
               </div>
-            </div>
 
-            {/* Badge flottant */}
-            <div className="float-badge absolute -right-4 top-6 z-20 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-3 shadow-card-lg">
-              <p className="text-xs font-bold uppercase tracking-widest text-brand-500">Nouveau</p>
-              <p className="mt-0.5 text-sm font-bold text-[var(--ink)]">Vue collaborative</p>
-            </div>
-
-            {/* Stats badge */}
-            <div className="float-badge absolute -left-2 bottom-8 z-20 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-3 shadow-card-lg" style={{ animationDelay: "2s" }}>
-              <p className="text-xs text-[var(--ink-3)]">Cartes terminees</p>
-              <p className="mt-0.5 text-xl font-black text-[var(--ink)]">24 <span className="text-xs font-bold text-green-500">+12%</span></p>
+              {/* Bottom bar */}
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-[var(--surface)] px-3 py-2">
+                <span className="text-[10px] text-[var(--ink-3)]">4 cartes terminées ce sprint</span>
+                <span className="text-[10px] font-bold text-green-500">↑ 12%</span>
+              </div>
             </div>
           </div>
         </div>
