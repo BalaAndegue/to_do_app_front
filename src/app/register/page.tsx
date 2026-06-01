@@ -20,7 +20,7 @@ export default function Register() {
   const router = useRouter();
   const { loginWithUser } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -99,7 +99,7 @@ export default function Register() {
               ))}
             </div>
 
-            {error && (
+            {error && Object.keys(fieldErrors).length === 0 && (
               <div className="rounded-xl border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
                 {error}
               </div>

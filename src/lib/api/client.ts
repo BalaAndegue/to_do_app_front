@@ -55,11 +55,24 @@ export const normalizeApiError = (error: unknown): string => {
         body.non_field_errors[0]) ||
       (typeof body?.message === "string" && body.message);
 
-    if (detail) {
-      return detail;
+    if (detail) return detail;
+
+    // Collect field-level validation messages (e.g. {"password": ["Trop courant."]})
+    if (body) {
+      const skip = new Set(["detail", "non_field_errors", "message"]);
+      const msgs: string[] = [];
+      for (const [key, val] of Object.entries(body)) {
+        if (skip.has(key)) continue;
+        if (Array.isArray(val)) {
+          for (const v of val) {
+            if (typeof v === "string") msgs.push(v);
+          }
+        }
+      }
+      if (msgs.length > 0) return msgs.join(" ");
     }
 
-    return `${error.status} ${error.statusText}`;
+    return "Une erreur est survenue. Vérifiez les champs du formulaire.";
   }
 
   if (error instanceof Error) {
