@@ -91,4 +91,13 @@ export class CardsService {
             body: data,
         });
     }
+
+    public static cardsCopy(cardId: string): CancelablePromise<{ success: boolean; data: Card }> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/cards/{card_id}/copy/',
+            path: { card_id: cardId },
+            body: {},
+        });
+    }
 }

@@ -483,6 +483,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 isLoading={cardsLoading.has(list.list_id!)}
                 onRename={renameList}
                 onDelete={deleteList}
+                onArchive={listId => setLists(prev => prev.filter(l => l.list_id !== listId))}
                 onCardCreated={card => handleCardCreated(list.list_id!, card)}
                 onCardUpdated={card => handleCardUpdated(list.list_id!, card)}
                 onCardDeleted={cardId => handleCardDeleted(list.list_id!, cardId)}

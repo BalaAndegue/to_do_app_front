@@ -71,4 +71,22 @@ export class ListsService {
             body: data,
         });
     }
+
+    public static listsArchive(listId: string): CancelablePromise<{ success: boolean; message: string }> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/lists/{list_id}/archive/',
+            path: { list_id: listId },
+            body: {},
+        });
+    }
+
+    public static listsArchiveCards(listId: string): CancelablePromise<{ success: boolean; message: string }> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/lists/{list_id}/archive-cards/',
+            path: { list_id: listId },
+            body: {},
+        });
+    }
 }

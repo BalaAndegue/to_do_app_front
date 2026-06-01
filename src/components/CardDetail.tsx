@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Tag, User, Paperclip, Archive, Trash2, X, Check, Plus,
   Calendar, AlignLeft, CheckSquare, MessageCircle, Pencil,
-  Upload, Link2, AlertTriangle,
+  Upload, Link2, AlertTriangle, ChevronDown, Circle, CheckCircle2,
 } from "lucide-react";
 import { CardsService } from "@/lib/services/CardsService";
 import { CommentsService } from "@/lib/services/CommentsService";
@@ -15,7 +15,9 @@ import { CardLabelsService } from "@/lib/services/CardLabelsService";
 import { CardMembersService } from "@/lib/services/CardMembersService";
 import { AttachmentsService } from "@/lib/services/AttachmentsService";
 import { BoardsService } from "@/lib/services/BoardsService";
+import { ListsService } from "@/lib/services/ListsService";
 import { Card } from "@/lib/models/Card";
+import { List } from "@/lib/models/List";
 import { Comment } from "@/lib/models/Comment";
 import { Checklist } from "@/lib/models/Checklist";
 import { ChecklistItem } from "@/lib/models/ChecklistItem";
@@ -35,9 +37,10 @@ interface CardDetailProps {
   onClose: () => void;
   onCardUpdated?: (card: Card) => void;
   onCardDeleted?: (cardId: number) => void;
+  defaultPanel?: "labels" | "members" | "dates" | "checklist" | "attachments";
 }
 
-export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, onCardDeleted }: CardDetailProps) {
+export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, onCardDeleted, defaultPanel }: CardDetailProps) {
   const { user } = useAuth();
 
   const [card, setCard]               = useState<Card | null>(null);
@@ -45,6 +48,9 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
   const [checklists, setChecklists]   = useState<Checklist[]>([]);
   const [boardLabels, setBoardLabels] = useState<Label[]>([]);
   const [boardMembers, setBoardMembers] = useState<BoardMember[]>([]);
+  const [boardLists, setBoardLists]     = useState<List[]>([]);
+  const [listSelectorOpen, setListSelectorOpen] = useState(false);
+  const listSelectorRef = useRef<HTMLDivElement>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState<string | null>(null);
@@ -64,11 +70,14 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
 
   // Checklists
   const [newChecklistName, setNewChecklistName] = useState("");
-  const [addingChecklist, setAddingChecklist]   = useState(false);
   const [newItemName, setNewItemName]           = useState<Record<number, string>>({});
 
   // Sidebar panels
-  const [openPanel, setOpenPanel] = useState<"labels" | "members" | "dates" | "attachments" | null>(null);
+  const [openPanel, setOpenPanel] = useState<"labels" | "members" | "dates" | "checklist" | "attachments" | null>(
+    defaultPanel ?? null,
+  );
+  // When opened via card quick-action menu, auto-open the add form
+  const [addingChecklist, setAddingChecklist] = useState(defaultPanel === "checklist");
 
   // Dates
   const [startDate, setStartDate] = useState("");
@@ -85,13 +94,14 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
   const fetchAll = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const [cardData, commentsData, checklistsData, labelsData, membersData, attachData] = await Promise.all([
+      const [cardData, commentsData, checklistsData, labelsData, membersData, attachData, listsData] = await Promise.all([
         CardsService.cardsRead(String(cardId)),
         CommentsService.commentsList({ card: cardId }),
         ChecklistsService.checklistsList({ card: cardId }),
         LabelsService.labelsList({ board: boardId }),
         BoardsService.boardsMembers(String(boardId)),
         AttachmentsService.attachmentsList({ card: cardId }),
+        ListsService.listsList({ board: boardId, archived: false }),
       ]);
       setCard(cardData);
       setTitleDraft(cardData.title);
@@ -103,11 +113,31 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
       setBoardLabels(labelsData.results);
       setBoardMembers(membersData);
       setAttachments(attachData.results);
+      setBoardLists(listsData.results);
     } catch (err) { setError(normalizeApiError(err)); }
     finally { setLoading(false); }
   }, [cardId, boardId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (listSelectorRef.current && !listSelectorRef.current.contains(e.target as Node))
+        setListSelectorOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const moveToList = async (targetListId: number) => {
+    if (!card || targetListId === card.list) return;
+    setListSelectorOpen(false);
+    try {
+      const res = await CardsService.cardsMove(String(card.card_id), { position: 0, list_id: targetListId });
+      setCard(res.data);
+      onCardUpdated?.(res.data);
+    } catch (err) { setError(normalizeApiError(err)); }
+  };
 
   // ── Carte ────────────────────────────────────────────────────
   const patchCard = async (data: Partial<Card>) => {
@@ -341,36 +371,74 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
   return (
     <Overlay onClose={onClose}>
       <ModalShell>
-        {/* ── En-tête : titre + fermer ──────────────── */}
-        <div className="flex items-start gap-3 border-b border-[var(--line)] px-5 pt-5 pb-4">
-          <div className="mt-1 shrink-0 text-[var(--ink-3)]"><AlignLeft size={16} /></div>
-          <div className="min-w-0 flex-1">
-            {editingTitle ? (
-              <input
-                autoFocus
-                className="w-full rounded-lg border-2 border-brand-500 bg-[var(--surface)] px-3 py-1.5 text-lg font-bold text-[var(--ink)] focus:outline-none"
-                value={titleDraft}
-                onChange={e => setTitleDraft(e.target.value)}
-                onBlur={saveTitle}
-                onKeyDown={e => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-              />
-            ) : (
-              <h2
-                className="cursor-pointer text-lg font-bold leading-snug text-[var(--ink)] transition hover:text-brand-500"
-                onClick={() => setEditingTitle(true)}
-                title="Cliquer pour modifier"
+        {/* ── En-tête ───────────────────────────────── */}
+        <div className="border-b border-[var(--line)] px-5 pt-4 pb-3">
+          {/* List selector */}
+          <div className="mb-2 flex items-center justify-between">
+            <div ref={listSelectorRef} className="relative">
+              <button
+                onClick={() => setListSelectorOpen(v => !v)}
+                className="flex items-center gap-1 rounded-md bg-[var(--surface-3)] px-2.5 py-1 text-xs font-semibold text-[var(--ink-2)] transition hover:bg-[var(--line)] hover:text-[var(--ink)]"
               >
-                {card.title}
-              </h2>
-            )}
-            <p className="mt-0.5 text-xs text-[var(--ink-3)]">Carte #{card.card_id}</p>
+                {boardLists.find(l => l.list_id === card.list)?.name ?? "Liste"}
+                <ChevronDown size={12} />
+              </button>
+              {listSelectorOpen && (
+                <div className="absolute left-0 top-full z-50 mt-1 min-w-40 rounded-xl border border-[var(--line)] bg-[var(--surface)] py-1 shadow-card-lg">
+                  {boardLists.map(l => (
+                    <button
+                      key={l.list_id}
+                      onClick={() => moveToList(l.list_id!)}
+                      className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[var(--ink)] transition hover:bg-[var(--surface-3)] ${l.list_id === card.list ? "font-bold text-brand-500" : ""}`}
+                    >
+                      {l.list_id === card.list && <Check size={11} />}
+                      <span className={l.list_id === card.list ? "" : "ml-3"}>{l.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-[var(--ink-3)] transition hover:bg-[var(--line)] hover:text-[var(--ink)]"
+            >
+              <X size={16} />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 rounded-lg p-1.5 text-[var(--ink-3)] transition hover:bg-[var(--line)] hover:text-[var(--ink)]"
-          >
-            <X size={16} />
-          </button>
+
+          {/* Completion toggle + title */}
+          <div className="flex items-start gap-3">
+            <button
+              onClick={() => patchCard({ due_date_complete: !card.due_date_complete })}
+              className="mt-0.5 shrink-0 transition hover:scale-110"
+              title={card.due_date_complete ? "Marquer comme non complète" : "Marquer comme complète"}
+            >
+              {card.due_date_complete
+                ? <CheckCircle2 size={20} className="text-green-500" />
+                : <Circle size={20} className="text-[var(--ink-3)]" />
+              }
+            </button>
+            <div className="min-w-0 flex-1">
+              {editingTitle ? (
+                <input
+                  autoFocus
+                  className="w-full rounded-lg border-2 border-brand-500 bg-[var(--surface)] px-3 py-1.5 text-lg font-bold text-[var(--ink)] focus:outline-none"
+                  value={titleDraft}
+                  onChange={e => setTitleDraft(e.target.value)}
+                  onBlur={saveTitle}
+                  onKeyDown={e => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
+                />
+              ) : (
+                <h2
+                  className={`cursor-pointer text-lg font-bold leading-snug transition hover:text-brand-500 ${card.due_date_complete ? "line-through text-[var(--ink-3)]" : "text-[var(--ink)]"}`}
+                  onClick={() => setEditingTitle(true)}
+                >
+                  {card.title}
+                </h2>
+              )}
+              <p className="mt-0.5 text-[10px] text-[var(--ink-3)]">Carte #{card.card_id}</p>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-1 overflow-hidden">
@@ -723,6 +791,13 @@ export default function CardDetail({ cardId, boardId, onClose, onCardUpdated, on
                 <Btn onClick={saveDates} disabled={savingCard}>Sauvegarder</Btn>
               </div>
             )}
+
+            {/* Checklist */}
+            <SideAction icon={<CheckSquare size={14} />} label="Checklist"
+              active={openPanel === "checklist"} onClick={() => {
+                setOpenPanel(p => p === "checklist" ? null : "checklist");
+                setAddingChecklist(true);
+              }} />
 
             {/* Pièces jointes */}
             <SideAction
